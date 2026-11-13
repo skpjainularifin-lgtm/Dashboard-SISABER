@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Peta Jabatan & Data Pegawai 2027</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f0f2f5;color:#333}
+.header{background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.header h1{font-size:18px;font-weight:600}
+.header p{font-size:11px;opacity:.9}
+.btn{border:none;padding:8px 14px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-g{background:#70AD47;color:#fff}.btn-g:hover{background:#548235}
+.btn-r{background:#C00000;color:#fff}.btn-r:hover{background:#9C0000}
+.btn-b{background:#2E75B6;color:#fff}.btn-b:hover{background:#1F4E79}
+.tabs{background:#fff;margin:10px 20px 0;border-radius:8px 8px 0 0;display:flex;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.tab{padding:10px 18px;cursor:pointer;font-weight:600;font-size:12px;color:#666;border-bottom:3px solid transparent}
+.tab.active{color:#1F4E79;border-bottom-color:#2E75B6;background:#f8f9fa}
+.tab-content{display:none}.tab-content.active{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:14px 20px}
+.kpi{background:#fff;border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05);border-left:4px solid #2E75B6}
+.kpi.g{border-left-color:#70AD47}.kpi.o{border-left-color:#ED7D31}.kpi.r{border-left-color:#C00000}
+.kpi .v{font-size:24px;font-weight:700;color:#1F4E79}
+.kpi.g .v{color:#548235}.kpi.o .v{color:#C65911}
+.kpi .l{font-size:10px;color:#666;margin-top:2px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px 14px}
+.card{background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card.full{grid-column:span 2}
+.ct{font-size:12px;font-weight:600;color:#1F4E79;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #eee}
+.tbl-wrap{background:#fff;margin:0 20px 14px;padding:10px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.05);overflow-x:auto;max-height:500px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#1F4E79;color:#fff;padding:6px 4px;text-align:center;position:sticky;top:0}
+td{padding:5px 4px;border-bottom:1px solid #eee}
+td.c{text-align:center}td.l{text-align:left}
+tr:hover{background:#f5f9fc}
+tr.fung{background:#E2EFDA}tr.tot{background:#FFF2CC;font-weight:600}
+input.edit{width:100%;border:1px solid #ddd;padding:3px 5px;font-size:11px;border-radius:3px}
+input.edit:focus{border-color:#2E75B6;outline:none}
+select.edit{width:100%;border:1px solid #ddd;padding:3px;font-size:11px;border-radius:3px}
+.toolbar{background:#fff;margin:0 20px 8px;padding:8px 12px;border-radius:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar input,.toolbar select{padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:11px}
+.sec{font-size:13px;font-weight:600;color:#1F4E79;margin:12px 20px 6px;padding-bottom:3px;border-bottom:2px solid #2E75B6}
+.footer{text-align:center;padding:8px;font-size:10px;color:#888;background:#fff;border-top:1px solid #eee}
+@media(max-width:800px){.charts{grid-template-columns:1fr}.card.full{grid-column:span 1}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Dashboard Peta Jabatan & Data Pegawai 2027</h1>
+    <p>UPT RSDSN DAN AMPK MALANG</p>
+  </div>
+  <div>
+    <button class="btn btn-g" onclick="exportAll()">⬇ Export Semua (Excel)</button>
+    <button class="btn btn-r" onclick="resetAll()" style="margin-left:6px">↺ Reset</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('dash',this)">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab('pegawai',this)">👥 Data Pegawai</div>
+  <div class="tab" onclick="switchTab('peta',this)">🏢 Peta Jabatan</div>
+  <div class="tab" onclick="switchTab('koneksi',this)">🔗 Koneksi Data</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="tab-dash" class="tab-content active">
+  <div class="kpi-row">
+    <div class="kpi"><div class="v" id="kTotal">78</div><div class="l">Total Pegawai</div></div>
+    <div class="kpi o"><div class="v" id="kPNS">42</div><div class="l">PNS</div></div>
+    <div class="kpi"><div class="v" id="kPPPK">3</div><div class="l">PPPK</div></div>
+    <div class="kpi g"><div class="v" id="kP3K">33</div><div class="l">P3K PW</div></div>
+    <div class="kpi r"><div class="v">-12</div><div class="l">Selisih Kebutuhan</div></div>
+  </div>
+  <div class="charts">
+    <div class="card"><div class="ct">Status Kepegawaian</div><div id="cStatus"></div></div>
+    <div class="card"><div class="ct">Komposisi Jabatan</div><div id="cJabatan"></div></div>
+    <div class="card full"><div class="ct">Bezetting vs Kebutuhan per Unit</div><div id="cBvK"></div></div>
+  </div>
+</div>
+
+<!-- DATA PEGAWAI -->
+<div id="tab-pegawai" class="tab-content">
+  <div class="toolbar">
+    <input type="text" id="searchPeg" placeholder="🔍 Cari nama atau NIP..." oninput="filterPegawai()" style="width:220px">
+    <select id="filterStatus" onchange="filterPegawai()">
+      <option value="all">Semua Status</option>
+      <option value="PNS">PNS</option>
+      <option value="PPPK">PPPK</option>
+      <option value="P3K PW">P3K PW</option>
+    </select>
+    <button class="btn btn-b" onclick="addPegawai()">➕ Tambah Pegawai Baru</button>
+    <button class="btn btn-g" onclick="savePegawai()">💾 Simpan Perubahan</button>
+    <span id="pegCount" style="margin-left:auto;font-size:12px;color:#666"></span>
+  </div>
+  <div class="tbl-wrap">
+    <table id="tblPegawai">
+      <thead>
+        <tr><th>No</th><th>Nama</th><th>NIP</th><th>Pangkat/Gol</th><th>Pendidikan</th><th>Status</th><th>Jabatan (Edit)</th><th>Aksi</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PETA JABATAN -->
+<div id="tab-peta" class="tab-content">
+  <div class="sec">Peta Jabatan Hierarki</div>
+  <div class="tbl-wrap" style="max-height:none">
+    <div id="orgView" style="padding:10px"></div>
+  </div>
+  <div class="sec">Tabel Jabatan</div>
+  <div class="tbl-wrap">
+    <table id="tblPeta">
+      <thead><tr><th>No</th><th>Unit</th><th>Jabatan</th><th>Kelas</th><th>B</th><th>K</th><th>Selisih</th><th>Kategori</th><th>Terisi</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- KONEKSI DATA -->
+<div id="tab-koneksi" class="tab-content">
+  <div class="sec">Ringkasan Koneksi Data Pegawai ↔ Peta Jabatan</div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="v" id="kTerisi">0</div><div class="l">Jabatan Terisi</div></div>
+    <div class="kpi r"><div class="v" id="kKosong">0</div><div class="l">Jabatan Kosong</div></div>
+    <div class="kpi g"><div class="v" id="kMatch">0</div><div class="l">Pegawai Tertempatkan</div></div>
+  </div>
+  <div class="tbl-wrap">
+    <table id="tblKoneksi">
+      <thead><tr><th>Jabatan</th><th>Unit</th><th>Kebutuhan</th><th>Terisi</th><th>Pegawai</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">Dashboard Peta Jabatan & Data Pegawai 2027 • UPT RSDSN & AMPK Malang</div>
+
+<script>
+const EMP = [{"no":1,"nama":"Anantya Wulandari, S.Sos., M.Si.","nip":"198609052011012014","pangkat":"Pembina / (IVa)","jabatan":"","pendidikan":"S-2","status":"PNS"},{"no":2,"nama":"Helmi Kurniawan, S.E.","nip":"197911212009031002","pangkat":"Penata Muda Tk. I / (III/b)","jabatan":"","pendidikan":"S1","status":"PNS"},{"no":3,"nama":"Mustakim","nip":"197707192008011012","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":4,"nama":"Nurmasari, Amd","nip":"199409222025042005","pangkat":"Pengatur / (II/c)","jabatan":"","pendidikan":"DIII","status":"PNS"},{"no":5,"nama":"Nevi Yunitasari, A.Md.AK","nip":"199704092025042008","pangkat":"Pengatur / (II/c)","jabatan":"","pendidikan":"DIII","status":"PNS"},{"no":6,"nama":"Aina Anggraeni, A.Md.Ak.","nip":"19990724 202504 2 010","pangkat":"Pengatur / (II/c)","jabatan":"","pendidikan":"D-III","status":"PNS"},{"no":7,"nama":"Khoirin Aideksa Falantino, A.Md.Ak.","nip":"20020310 202504 2 007","pangkat":"Pengatur / (II/c)","jabatan":"","pendidikan":"D-III","status":"PNS"},{"no":8,"nama":"Jainul Arifin, S.M.","nip":"19831118 200901 1 003","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"S-1","status":"PNS"},{"no":9,"nama":"Miswandi","nip":"198106182009011005","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":10,"nama":"Rofi Anama Putra","nip":"19770506 201001 1 004","pangkat":"Pengatur / (II/c)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":11,"nama":"Joko Sulianto","nip":"19771027 200901 1 009","pangkat":"Pengatur Muda- II/a","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":12,"nama":"Ari Wahyudi, S.E.","nip":"199202262025211004","pangkat":"IX","jabatan":"","pendidikan":"S1","status":"PPPK"},{"no":13,"nama":"Mohamad Risqi Indrayana, S. Sos, M. M","nip":"19911217 202521 1 007","pangkat":"-","jabatan":"","pendidikan":"S-1","status":"PPPK"},{"no":14,"nama":"Slamet Nuriadi","nip":"197010212025211021","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":15,"nama":"Sugiono","nip":"198004242025211096","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":16,"nama":"Rudi Feriyanto","nip":"198402292025211065","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":17,"nama":"R. Sapto Winarno","nip":"197704162025211056","pangkat":"-","jabatan":"","pendidikan":"SLTP","status":"P3K PW"},{"no":18,"nama":"Lauda Vinca Dasanta, S. S.","nip":"19940914 202521 2 110","pangkat":"-","jabatan":"","pendidikan":"S-1","status":"P3K PW"},{"no":19,"nama":"Fathoni Darmawan","nip":"19780211 202521 1 034","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":20,"nama":"Muhamad","nip":"19730501 202521 1 039","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":21,"nama":"Surya Adi Utama","nip":"19890101 202521 1 277","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":22,"nama":"Moch. Anwar","nip":"19920602 202521 1 147","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":23,"nama":"Siti Zulaifah, S.E.","nip":"19690913 199501 2 001","pangkat":"III/d - Penata Tingkat I","jabatan":"","pendidikan":"S-1","status":"PNS"},{"no":24,"nama":"Ridwan","nip":"197004122008011015","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":25,"nama":"Titut Eko Yulianto","nip":"198107032009011005","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":26,"nama":"Rena Cintia Dewi","nip":"198205202009012001","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":27,"nama":"Eko Julianto","nip":"197607232009011002","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":28,"nama":"Nurul Hidayati, S.Sos.","nip":"198004302010012001","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"S1","status":"PNS"},{"no":29,"nama":"Muslimin, S.A.P.","nip":"19731229 200801 1 005","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"S-1","status":"PNS"},{"no":30,"nama":"Nurul Hidayah","nip":"197707112009012002","pangkat":"Pengatur Tk. I / (II/d)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":31,"nama":"Prapti","nip":"197204062008012018","pangkat":"Pengatur Tk. I / (II/d)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":32,"nama":"Marnianto","nip":"198303152010011005","pangkat":"Pengatur Tk. I / (II/d)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":33,"nama":"Mujianto","nip":"198411012009011002","pangkat":"Pengatur / (II/c)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":34,"nama":"Anggei Wulandari, A.Md.AK","nip":"199708012025042010","pangkat":"Pengatur / (II/c)","jabatan":"","pendidikan":"DIII","status":"PNS"},{"no":35,"nama":"Djurijono","nip":"196901012009011004","pangkat":"Pengatur Muda / (II/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":36,"nama":"Sarjiono","nip":"197708132009011004","pangkat":"Pengatur Muda / (II/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":37,"nama":"Slamet Basuki","nip":"19740906 199903 1 005","pangkat":"Penata Muda Tingkat I / (III/b)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":38,"nama":"Anggi Dika Ulandari","nip":"199611082025212093","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":39,"nama":"Sri Wahyu Pusponegoro","nip":"200007242025212047","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":40,"nama":"Siti Rahayu Ningsih","nip":"198303162025212053","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":41,"nama":"Abdul Wahid","nip":"198106102025211119","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":42,"nama":"Eli Sri Mujiati","nip":"198907152025212114","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":43,"nama":"Rudy Wijayanto","nip":"198310262025211069","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":44,"nama":"Abdul Kholiq, S.H.","nip":"19740725 202521 1 052","pangkat":"-","jabatan":"","pendidikan":"S-1","status":"P3K PW"},{"no":45,"nama":"Indras Moro","nip":"19800502 202521 1 089","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":46,"nama":"Siva Yuli Maulida","nip":"20000712 202521 2 060","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":47,"nama":"Warsini","nip":"19780819 202521 2 030","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":48,"nama":"Kusdiana Diah Anasta, S.E.","nip":"19740921 202521 2 022","pangkat":"-","jabatan":"","pendidikan":"S-1","status":"P3K PW"},{"no":49,"nama":"Sulistyoningsih, A.Ks,M.Si.","nip":"19740415 199803 2 007","pangkat":"Pembina / ( IV/a)","jabatan":"","pendidikan":"S-2","status":"PNS"},{"no":50,"nama":"Iwit Hariyanti, S. Sos.","nip":"197012281998032004","pangkat":"Penata Tk. I / (III/d)","jabatan":"","pendidikan":"S1","status":"PNS"},{"no":51,"nama":"Pipin Naomi Mattea","nip":"196908281992022002","pangkat":"Penata Tk. I / (III/d)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":52,"nama":"Wiwid Agus Sutriyono","nip":"196908241999031007","pangkat":"Penata Muda Tk. I / (III/b)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":53,"nama":"Tetri Nabila Nurbaiti, S.Tr.Sos.","nip":"199605212022042001","pangkat":"Penata Muda Tk. I / (III/b)","jabatan":"","pendidikan":"DIV","status":"PNS"},{"no":54,"nama":"Sulistiowati, S.M.","nip":"19840101 201001 2 004","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"S-1","status":"PNS"},{"no":55,"nama":"Hadi","nip":"197410052009011003","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":56,"nama":"Lilik Dwi Lestari","nip":"197611292010012002","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":57,"nama":"Ahmat Choiri","nip":"198211072010011005","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":58,"nama":"Ken Edy Widjaja","nip":"197507022010011005","pangkat":"Pengatur / (II/c)","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":59,"nama":"Ratemuji","nip":"19731014 200901 1 001","pangkat":"Pengatur Tingkat I -(II/d )","jabatan":"","pendidikan":"SLTA","status":"PNS"},{"no":60,"nama":"Jutrianto, S.A.P.","nip":"19820626 200901 1 006","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"S-1","status":"PNS"},{"no":61,"nama":"Merielle Yuditha Canary, S.Pd., M.Kesos.","nip":"19870716 202012 2 010","pangkat":"Penata Muda Tingkat I / (III/b)","jabatan":"","pendidikan":"S-2","status":"PNS"},{"no":62,"nama":"Arif Dwi Nanta Putra, S.A.P.","nip":"19810512 201001 1 001","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"S-1","status":"PNS"},{"no":63,"nama":"Samuji, S.A.P.","nip":"19831231 200901 1 006","pangkat":"Penata Muda / (III/a)","jabatan":"","pendidikan":"S-1","status":"PNS"},{"no":64,"nama":"Siti Rofikhoh, S.Ag.","nip":"19730425 201412 2 002","pangkat":"Penata / (III/c)","jabatan":"","pendidikan":"S-1","status":"PNS"},{"no":65,"nama":"Dina Muliana Sari, S.Pt","nip":"19810828 202521 2 006","pangkat":"-","jabatan":"","pendidikan":"S-1","status":"PPPK"},{"no":66,"nama":"Lailiel Moeflichah, SE","nip":"197208122025212021","pangkat":"-","jabatan":"","pendidikan":"S1","status":"P3K PW"},{"no":67,"nama":"Zaki Firmansyah, S.Psi.","nip":"198203022025211112","pangkat":"-","jabatan":"","pendidikan":"S1","status":"P3K PW"},{"no":68,"nama":"Wahyu Sukmajati, S.Kom.","nip":"198404042025211157","pangkat":"-","jabatan":"","pendidikan":"S1","status":"P3K PW"},{"no":69,"nama":"Adimas Suryansyah, S.Sos.","nip":"199106222025211094","pangkat":"-","jabatan":"","pendidikan":"S1","status":"P3K PW"},{"no":70,"nama":"Hariyono","nip":"197209132025211029","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":71,"nama":"Wahyu Feri Eka Wijaya","nip":"198702022025211180","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":72,"nama":"Aris Sudarmanto","nip":"198512182025211088","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":73,"nama":"Megisteria Kaleby","nip":"199809042025212097","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":74,"nama":"Azzahrah Mumtaz Firdaus","nip":"200206212025212010","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":75,"nama":"Aldion Ebenheazer Medellu","nip":"199709092025211130","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":76,"nama":"Suwono","nip":"19730709 202521 1 037","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"},{"no":77,"nama":"Dian Bagus Aryanto, S.Psi","nip":"19770401 202521 1 078","pangkat":"-","jabatan":"","pendidikan":"S-1","status":"P3K PW"},{"no":78,"nama":"Umi Fitriani","nip":"19910417 202521 2 127","pangkat":"-","jabatan":"","pendidikan":"SLTA","status":"P3K PW"}];
+
+const PETA = {
+  tu:[
+    {j:"PENELAAH TEKNIS KEBIJAKAN",k:7,b:0,n:1,c:"Pelaksana"},
+    {j:"PENATA LAYANAN OPERASIONAL",k:7,b:3,n:3,c:"Pelaksana"},
+    {j:"PENATA LAKSANA BARANG TERAMPIL",k:6,b:4,n:4,c:"Fungsional"},
+    {j:"PENGOLAH DATA DAN INFORMASI",k:6,b:0,n:1,c:"Pelaksana"},
+    {j:"PENGADMINISTRASI PERKANTORAN",k:5,b:2,n:1,c:"Pelaksana"},
+    {j:"OPERATOR LAYANAN OPERASIONAL",k:5,b:11,n:11,c:"Pelaksana"},
+    {j:"PENGELOLA UMUM OPERASIONAL",k:1,b:1,n:1,c:"Pelaksana"}
+  ],
+  ps:[
+    {j:"PENELAAH TEKNIS KEBIJAKAN",k:7,b:0,n:2,c:"Pelaksana"},
+    {j:"PENATA LAYANAN OPERASIONAL",k:7,b:2,n:2,c:"Pelaksana"},
+    {j:"PENGELOLA LAYANAN OPERASIONAL",k:6,b:0,n:0,c:"Pelaksana"},
+    {j:"PENGELOLA LAYANAN KESEHATAN",k:6,b:1,n:2,c:"Pelaksana"},
+    {j:"PENGOLAH DATA DAN INFORMASI",k:6,b:2,n:3,c:"Pelaksana"},
+    {j:"OPERATOR LAYANAN OPERASIONAL",k:5,b:12,n:19,c:"Pelaksana"},
+    {j:"OPERATOR LAYANAN OPERASIONAL",k:3,b:7,n:0,c:"Pelaksana"}
+  ],
+  pr:[
+    {j:"PEKERJA SOSIAL AHLI MUDA",k:9,b:0,n:2,c:"Fungsional"},
+    {j:"PEKERJA SOSIAL AHLI PERTAMA",k:8,b:1,n:3,c:"Fungsional"},
+    {j:"PEKERJA SOSIAL PENYELIA",k:8,b:1,n:3,c:"Fungsional"},
+    {j:"PEKERJA SOSIAL TERAMPIL",k:6,b:1,n:3,c:"Fungsional"},
+    {j:"PENELAAH TEKNIS KEBIJAKAN",k:7,b:1,n:3,c:"Pelaksana"},
+    {j:"PENATA LAYANAN OPERASIONAL",k:7,b:6,n:6,c:"Pelaksana"},
+    {j:"PENGOLAH DATA DAN INFORMASI",k:6,b:3,n:3,c:"Pelaksana"},
+    {j:"PENGADMINISTRASI PERKANTORAN",k:5,b:5,n:3,c:"Pelaksana"},
+    {j:"OPERATOR LAYANAN OPERASIONAL",k:5,b:10,n:10,c:"Pelaksana"},
+    {j:"WIDYA ISWARA",k:8,b:1,n:0,c:"Fungsional"}
+  ]
+};
+
+let pegawaiData = JSON.parse(JSON.stringify(EMP));
+
+function switchTab(id,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='dash') renderDash();
+  if(id==='pegawai') renderPegawai();
+  if(id==='peta') renderPeta();
+  if(id==='koneksi') renderKoneksi();
+}
+
+function renderDash(){
+  const pns=pegawaiData.filter(e=>e.status==='PNS').length;
+  const pppk=pegawaiData.filter(e=>e.status==='PPPK').length;
+  const p3k=pegawaiData.filter(e=>e.status==='P3K PW').length;
+  document.getElementById('kTotal').textContent=pegawaiData.length;
+  document.getElementById('kPNS').textContent=pns;
+  document.getElementById('kPPPK').textContent=pppk;
+  document.getElementById('kP3K').textContent=p3k;
+  Plotly.newPlot('cStatus',[{labels:['PNS','PPPK','P3K PW'],values:[pns,pppk,p3k],type:'pie',hole:.4,marker:{colors:['#5B9BD5','#ED7D31','#70AD47']}}],{margin:{t:5,b:5,l:5,r:5},height:250,showlegend:true},{responsive:true,displayModeBar:false});
+  Plotly.newPlot('cJabatan',[{labels:['Eselon','Pelaksana','Fungsional'],values:[4,66,8],type:'pie',hole:.4,marker:{colors:['#ED7D31','#5B9BD5','#70AD47']}}],{margin:{t:5,b:5,l:5,r:5},height:250,showlegend:true},{responsive:true,displayModeBar:false});
+  Plotly.newPlot('cBvK',[
+    {x:['Tata Usaha','Pelayanan Sosial','Perlindungan'],y:[21,24,29],name:'B',type:'bar',marker:{color:'#5B9BD5'}},
+    {x:['Tata Usaha','Pelayanan Sosial','Perlindungan'],y:[22,28,34],name:'K',type:'bar',marker:{color:'#ED7D31'}}
+  ],{barmode:'group',margin:{t:5,b:30,l:35,r:5},height:250,legend:{orientation:'h',y:-0.2}},{responsive:true,displayModeBar:false});
+}
+
+function getAllJabatan(){
+  const list=[
+    {nama:'KEPALA UNIT PELAKSANA TEKNIS',unit:'Eselon',kategori:'Eselon III'},
+    {nama:'KEPALA SUB BAGIAN TATA USAHA',unit:'Tata Usaha',kategori:'Eselon IV'},
+    {nama:'KEPALA SEKSI PELAYANAN SOSIAL',unit:'Pelayanan Sosial',kategori:'Eselon IV'},
+    {nama:'KEPALA SEKSI PERLINDUNGAN DAN REHABILITASI SOSIAL',unit:'Perlindungan',kategori:'Eselon IV'}
+  ];
+  ['tu','ps','pr'].forEach(u=>{
+    PETA[u].forEach(d=>list.push({nama:d.j,unit:u==='tu'?'Tata Usaha':u==='ps'?'Pelayanan Sosial':'Perlindungan',kategori:d.c}));
+  });
+  return list;
+}
+
+function renderPegawai(){
+  const tb=document.querySelector('#tblPegawai tbody');
+  tb.innerHTML='';
+  const jabList=getAllJabatan();
+  pegawaiData.forEach((e,i)=>{
+    const optJab=jabList.map(j=>`<option value="${j.nama}" ${e.jabatan===j.nama?'selected':''}>${j.nama}</option>`).join('');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="c">${i+1}</td>
+      <td class="l"><input class="edit" value="${e.nama||''}" onchange="updatePegawai(${i},'nama',this.value)" placeholder="Nama lengkap"></td>
+      <td class="c"><input class="edit" value="${e.nip||''}" onchange="updatePegawai(${i},'nip',this.value)" style="width:150px" placeholder="NIP"></td>
+      <td class="l"><input class="edit" value="${e.pangkat||''}" onchange="updatePegawai(${i},'pangkat',this.value)" placeholder="Pangkat/Gol"></td>
+      <td class="c"><input class="edit" value="${e.pendidikan||''}" onchange="updatePegawai(${i},'pendidikan',this.value)" style="width:70px"></td>
+      <td class="c">
+        <select class="edit" onchange="updatePegawai(${i},'status',this.value)">
+          <option value="PNS" ${e.status==='PNS'?'selected':''}>PNS</option>
+          <option value="PPPK" ${e.status==='PPPK'?'selected':''}>PPPK</option>
+          <option value="P3K PW" ${e.status==='P3K PW'?'selected':''}>P3K PW</option>
+        </select>
+      </td>
+      <td class="l">
+        <select class="edit" onchange="updatePegawai(${i},'jabatan',this.value)" style="width:100%">
+          <option value="">-- Pilih Jabatan --</option>
+          ${optJab}
+        </select>
+      </td>
+      <td class="c"><button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="hapusPegawai(${i})">🗑️</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+  document.getElementById('pegCount').textContent='Total: '+pegawaiData.length+' pegawai';
+}
+
+function updatePegawai(i,field,val){
+  pegawaiData[i][field]=val;
+  localStorage.setItem('pegawaiData',JSON.stringify(pegawaiData));
+  // Auto-refresh connected views if they are visible
+  if(document.getElementById('tab-peta').classList.contains('active')) renderPeta();
+  if(document.getElementById('tab-koneksi').classList.contains('active')) renderKoneksi();
+  if(document.getElementById('tab-dash').classList.contains('active')) renderDash();
+}
+
+function filterPegawai(){
+  const q=document.getElementById('searchPeg').value.toLowerCase();
+  const st=document.getElementById('filterStatus').value;
+  document.querySelectorAll('#tblPegawai tbody tr').forEach((tr,i)=>{
+    const e=pegawaiData[i];
+    if(!e)return;
+    const matchQ=!q||e.nama.toLowerCase().includes(q)||e.nip.includes(q);
+    const matchS=st==='all'||e.status===st;
+    tr.style.display=(matchQ&&matchS)?'':'none';
+  });
+}
+
+function hapusPegawai(i){
+  const nama=pegawaiData[i]?.nama||'(tanpa nama)';
+  if(confirm('Yakin ingin menghapus pegawai: '+nama+' ?')){
+    pegawaiData.splice(i,1);
+    localStorage.setItem('pegawaiData',JSON.stringify(pegawaiData));
+    renderPegawai();
+    if(document.getElementById('tab-peta').classList.contains('active')) renderPeta();
+    if(document.getElementById('tab-koneksi').classList.contains('active')) renderKoneksi();
+  }
+}
+
+function addPegawai(){
+  pegawaiData.push({no:pegawaiData.length+1,nama:'',nip:'',pangkat:'',pendidikan:'',status:'PNS',jabatan:''});
+  renderPegawai();
+  const wrap=document.querySelector('#tblPegawai').closest('.tbl-wrap');
+  if(wrap) wrap.scrollTop=wrap.scrollHeight;
+}
+
+function savePegawai(){
+  localStorage.setItem('pegawaiData',JSON.stringify(pegawaiData));
+  alert('✅ Perubahan data pegawai berhasil disimpan!\\nTotal: '+pegawaiData.length+' pegawai');
+  renderDash();
+}
+
+function renderPeta(){
+  const all=[
+    {j:'KEPALA UNIT PELAKSANA TEKNIS',k:11,b:1,n:1,c:'Eselon',unit:'Eselon'},
+    {j:'KEPALA SUB BAGIAN TATA USAHA',k:9,b:1,n:1,c:'Eselon',unit:'Tata Usaha'},
+    {j:'KEPALA SEKSI PELAYANAN SOSIAL',k:9,b:1,n:1,c:'Eselon',unit:'Pelayanan Sosial'},
+    {j:'KEPALA SEKSI PERLINDUNGAN DAN REHABILITASI SOSIAL',k:9,b:1,n:1,c:'Eselon',unit:'Perlindungan'},
+    ...PETA.tu.map(d=>({...d,unit:'Tata Usaha'})),
+    ...PETA.ps.map(d=>({...d,unit:'Pelayanan Sosial'})),
+    ...PETA.pr.map(d=>({...d,unit:'Perlindungan'}))
+  ];
+  const tb=document.querySelector('#tblPeta tbody');
+  tb.innerHTML='';
+  all.forEach((d,i)=>{
+    const terisi=pegawaiData.filter(e=>e.jabatan===d.j).length;
+    const tr=document.createElement('tr');
+    if(d.c==='Fungsional')tr.className='fung';
+    else if(d.c==='Eselon')tr.style.background='#FCE4D6';
+    const statusTerisi=terisi>=d.n?'✅':'⚠️';
+    tr.innerHTML=`
+      <td class="c">${i+1}</td>
+      <td class="l">${d.unit}</td>
+      <td class="l">${d.j}</td>
+      <td class="c">${d.k}</td>
+      <td class="c">${d.b}</td>
+      <td class="c"><input type="number" min="0" class="edit" value="${d.n}" style="width:50px;text-align:center" onchange="updateK(${i},this.value)"></td>
+      <td class="c" id="sel${i}">${d.b-d.n}</td>
+      <td class="c">${d.c}</td>
+      <td class="c">${statusTerisi} ${terisi}/${d.n}</td>
+    `;
+    tb.appendChild(tr);
+  });
+  renderHierarchy();
+}
+
+function updateK(idx,val){
+  const n=parseInt(val)||0;
+  if(!window.kOverride) window.kOverride={};
+  window.kOverride[idx]=n;
+  localStorage.setItem('kOverride',JSON.stringify(window.kOverride));
+  renderPeta();
+  if(document.getElementById('tab-koneksi').classList.contains('active')) renderKoneksi();
+}
+
+function renderHierarchy(){
+  document.getElementById('orgView').innerHTML=`
+    <div style="text-align:center;margin-bottom:6px">
+      <div style="display:inline-block;background:#1F4E79;color:#fff;padding:12px 28px;border-radius:8px;font-weight:600;font-size:13px">
+        KEPALA UNIT PELAKSANA TEKNIS<br><span style="font-weight:normal;font-size:11px">RSDSN DAN AMPK MALANG — Kelas 11</span>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center"><div style="width:2px;height:16px;background:#1F4E79"></div></div>
+    <div style="display:flex;justify-content:center"><div style="height:2px;width:65%;background:#1F4E79"></div></div>
+    <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:6px;align-items:flex-start">
+      <div style="min-width:200px">
+        <div style="background:#2E75B6;color:#fff;padding:8px 12px;border-radius:6px;font-weight:600;text-align:center;font-size:12px">
+          KEPALA SUB BAGIAN<br>TATA USAHA<br><span style="font-weight:normal;font-size:10px">Kelas 9</span>
+        </div>
+        <div style="width:2px;height:10px;background:#2E75B6;margin:0 auto"></div>
+        ${PETA.tu.map(d=>`<div style="background:${d.c==='Fungsional'?'#E2EFDA':'#f8f9fa'};border:1px solid #ddd;border-left:3px solid ${d.c==='Fungsional'?'#70AD47':'#5B9BD5'};padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
+          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | B:${d.b} K:${d.n}</span>
+        </div>`).join('')}
+      </div>
+      <div style="min-width:200px">
+        <div style="background:#5B9BD5;color:#fff;padding:8px 12px;border-radius:6px;font-weight:600;text-align:center;font-size:12px">
+          KEPALA SEKSI<br>PELAYANAN SOSIAL<br><span style="font-weight:normal;font-size:10px">Kelas 9</span>
+        </div>
+        <div style="width:2px;height:10px;background:#5B9BD5;margin:0 auto"></div>
+        ${PETA.ps.map(d=>`<div style="background:#f8f9fa;border:1px solid #ddd;border-left:3px solid #5B9BD5;padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
+          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | B:${d.b} K:${d.n}</span>
+        </div>`).join('')}
+      </div>
+      <div style="min-width:200px">
+        <div style="background:#ED7D31;color:#fff;padding:8px 12px;border-radius:6px;font-weight:600;text-align:center;font-size:12px">
+          KEPALA SEKSI PERLINDUNGAN<br>DAN REHABILITASI SOSIAL<br><span style="font-weight:normal;font-size:10px">Kelas 9</span>
+        </div>
+        <div style="width:2px;height:10px;background:#ED7D31;margin:0 auto"></div>
+        ${PETA.pr.map(d=>`<div style="background:${d.c==='Fungsional'?'#E2EFDA':'#f8f9fa'};border:1px solid #ddd;border-left:3px solid ${d.c==='Fungsional'?'#70AD47':'#ED7D31'};padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
+          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | B:${d.b} K:${d.n}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderKoneksi(){
+  const eselon=[
+    {j:'KEPALA UNIT PELAKSANA TEKNIS',unit:'Eselon',n:1,c:'Eselon'},
+    {j:'KEPALA SUB BAGIAN TATA USAHA',unit:'Tata Usaha',n:1,c:'Eselon'},
+    {j:'KEPALA SEKSI PELAYANAN SOSIAL',unit:'Pelayanan Sosial',n:1,c:'Eselon'},
+    {j:'KEPALA SEKSI PERLINDUNGAN DAN REHABILITASI SOSIAL',unit:'Perlindungan',n:1,c:'Eselon'}
+  ];
+  const all=[...eselon,...PETA.tu.map(d=>({...d,unit:'Tata Usaha'})),...PETA.ps.map(d=>({...d,unit:'Pelayanan Sosial'})),...PETA.pr.map(d=>({...d,unit:'Perlindungan'}))];
+  const tb=document.querySelector('#tblKoneksi tbody');
+  tb.innerHTML='';
+  let terisi=0,kosong=0,match=0;
+  all.forEach(d=>{
+    const pegs=pegawaiData.filter(e=>e.jabatan===d.j);
+    if(pegs.length>0){terisi++;match+=pegs.length;}else kosong++;
+    const tr=document.createElement('tr');
+    if(d.c==='Fungsional')tr.className='fung';
+    else if(d.c==='Eselon')tr.style.background='#FCE4D6';
+    tr.innerHTML=`<td class="l">${d.j}</td><td class="l">${d.unit}</td><td class="c">${d.n}</td><td class="c" style="color:${pegs.length>=d.n?'#548235':'#C00000'}">${pegs.length}</td><td class="l">${pegs.map(p=>p.nama).join(', ')||'<span style="color:#999">Belum ada</span>'}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('kTerisi').textContent=terisi;
+  document.getElementById('kKosong').textContent=kosong;
+  document.getElementById('kMatch').textContent=match;
+}
+
+function exportAll(){
+  const wb=XLSX.utils.book_new();
+  // Pegawai
+  const pegRows=[['No','Nama','NIP','Pangkat/Gol','Pendidikan','Status','Jabatan']];
+  pegawaiData.forEach((e,i)=>pegRows.push([i+1,e.nama,e.nip,e.pangkat,e.pendidikan,e.status,e.jabatan]));
+  const ws1=XLSX.utils.aoa_to_sheet(pegRows);
+  ws1['!cols']=Array(7).fill({wch:20});
+  XLSX.utils.book_append_sheet(wb,ws1,'Data Pegawai');
+  // Peta
+  const petaRows=[['Unit','Jabatan','Kelas','B','K','Selisih','Kategori']];
+  [...PETA.tu.map(d=>({...d,u:'Tata Usaha'})),...PETA.ps.map(d=>({...d,u:'Pelayanan'})),...PETA.pr.map(d=>({...d,u:'Perlindungan'}))].forEach(d=>petaRows.push([d.u,d.j,d.k,d.b,d.n,d.b-d.n,d.c]));
+  const ws2=XLSX.utils.aoa_to_sheet(petaRows);
+  XLSX.utils.book_append_sheet(wb,ws2,'Peta Jabatan');
+  XLSX.writeFile(wb,'Dashboard_Peta_Jabatan_Pegawai_2027.xlsx');
+}
+
+function resetAll(){
+  if(confirm('Reset semua data ke kondisi awal?')){
+    pegawaiData=JSON.parse(JSON.stringify(EMP));
+    localStorage.removeItem('pegawaiData');
+    renderDash();renderPegawai();
+    alert('Data direset.');
+  }
+}
+
+// Load saved data if exists
+const saved=localStorage.getItem('pegawaiData');
+if(saved)try{pegawaiData=JSON.parse(saved);}catch(e){}
+
+renderDash();
+</script>
+</body>
+</html>
