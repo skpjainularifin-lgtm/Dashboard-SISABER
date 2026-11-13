@@ -99,7 +99,7 @@ select.edit{width:100%;border:1px solid #ddd;padding:3px;font-size:11px;border-r
   <div class="tbl-wrap">
     <table id="tblPegawai">
       <thead>
-        <tr><th>No</th><th>Nama</th><th>NIP</th><th>Pangkat/Gol</th><th>Pendidikan</th><th>Status</th><th>Jabatan (Edit)</th><th>Aksi</th></tr>
+        <tr><th>No</th><th>Nama</th><th>NIP</th><th>Pangkat/Gol</th><th>Pendidikan</th><th>Status</th><th>Unit Kerja</th><th>Jabatan</th><th>Aksi</th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -221,20 +221,28 @@ function renderPegawai(){
   const tb=document.querySelector('#tblPegawai tbody');
   tb.innerHTML='';
   const jabList=getAllJabatan();
+  const unitList=['Tata Usaha','Pelayanan Sosial','Perlindungan & Rehab','Eselon'];
   pegawaiData.forEach((e,i)=>{
     const optJab=jabList.map(j=>`<option value="${j.nama}" ${e.jabatan===j.nama?'selected':''}>${j.nama}</option>`).join('');
+    const optUnit=unitList.map(u=>`<option value="${u}" ${e.unit===u?'selected':''}>${u}</option>`).join('');
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td class="c">${i+1}</td>
-      <td class="l"><input class="edit" value="${e.nama||''}" onchange="updatePegawai(${i},'nama',this.value)" placeholder="Nama lengkap"></td>
-      <td class="c"><input class="edit" value="${e.nip||''}" onchange="updatePegawai(${i},'nip',this.value)" style="width:150px" placeholder="NIP"></td>
-      <td class="l"><input class="edit" value="${e.pangkat||''}" onchange="updatePegawai(${i},'pangkat',this.value)" placeholder="Pangkat/Gol"></td>
-      <td class="c"><input class="edit" value="${e.pendidikan||''}" onchange="updatePegawai(${i},'pendidikan',this.value)" style="width:70px"></td>
+      <td class="l"><input class="edit" value="${e.nama||''}" onchange="updatePegawai(${i},'nama',this.value)" placeholder="Nama"></td>
+      <td class="c"><input class="edit" value="${e.nip||''}" onchange="updatePegawai(${i},'nip',this.value)" style="width:140px" placeholder="NIP"></td>
+      <td class="l"><input class="edit" value="${e.pangkat||''}" onchange="updatePegawai(${i},'pangkat',this.value)" placeholder="Pangkat"></td>
+      <td class="c"><input class="edit" value="${e.pendidikan||''}" onchange="updatePegawai(${i},'pendidikan',this.value)" style="width:60px"></td>
       <td class="c">
         <select class="edit" onchange="updatePegawai(${i},'status',this.value)">
           <option value="PNS" ${e.status==='PNS'?'selected':''}>PNS</option>
           <option value="PPPK" ${e.status==='PPPK'?'selected':''}>PPPK</option>
           <option value="P3K PW" ${e.status==='P3K PW'?'selected':''}>P3K PW</option>
+        </select>
+      </td>
+      <td class="c">
+        <select class="edit" onchange="updatePegawai(${i},'unit',this.value)">
+          <option value="">-- Unit --</option>
+          ${optUnit}
         </select>
       </td>
       <td class="l">
@@ -243,7 +251,7 @@ function renderPegawai(){
           ${optJab}
         </select>
       </td>
-      <td class="c"><button class="btn btn-r" style="padding:4px 10px;font-size:11px" onclick="hapusPegawai(${i})">🗑️</button></td>
+      <td class="c"><button class="btn btn-r" style="padding:4px 8px;font-size:10px" onclick="hapusPegawai(${i})">🗑️</button></td>
     `;
     tb.appendChild(tr);
   });
@@ -283,7 +291,7 @@ function hapusPegawai(i){
 }
 
 function addPegawai(){
-  pegawaiData.push({no:pegawaiData.length+1,nama:'',nip:'',pangkat:'',pendidikan:'',status:'PNS',jabatan:''});
+  pegawaiData.push({no:pegawaiData.length+1,nama:'',nip:'',pangkat:'',pendidikan:'',status:'PNS',unit:'',jabatan:''});
   renderPegawai();
   const wrap=document.querySelector('#tblPegawai').closest('.tbl-wrap');
   if(wrap) wrap.scrollTop=wrap.scrollHeight;
@@ -407,8 +415,8 @@ function renderKoneksi(){
 function exportAll(){
   const wb=XLSX.utils.book_new();
   // Pegawai
-  const pegRows=[['No','Nama','NIP','Pangkat/Gol','Pendidikan','Status','Jabatan']];
-  pegawaiData.forEach((e,i)=>pegRows.push([i+1,e.nama,e.nip,e.pangkat,e.pendidikan,e.status,e.jabatan]));
+  const pegRows=[['No','Nama','NIP','Pangkat/Gol','Pendidikan','Status','Unit Kerja','Jabatan']];
+  pegawaiData.forEach((e,i)=>pegRows.push([i+1,e.nama,e.nip,e.pangkat,e.pendidikan,e.status,e.unit||'',e.jabatan]));
   const ws1=XLSX.utils.aoa_to_sheet(pegRows);
   ws1['!cols']=Array(7).fill({wch:20});
   XLSX.utils.book_append_sheet(wb,ws1,'Data Pegawai');
