@@ -303,12 +303,16 @@ function savePegawai(){
   renderDash();
 }
 
+function getBezetting(jabatan){
+  return pegawaiData.filter(e=>e.jabatan===jabatan).length;
+}
+
 function renderPeta(){
   const all=[
-    {j:'KEPALA UNIT PELAKSANA TEKNIS',k:11,b:1,n:1,c:'Eselon',unit:'Eselon'},
-    {j:'KEPALA SUB BAGIAN TATA USAHA',k:9,b:1,n:1,c:'Eselon',unit:'Tata Usaha'},
-    {j:'KEPALA SEKSI PELAYANAN SOSIAL',k:9,b:1,n:1,c:'Eselon',unit:'Pelayanan Sosial'},
-    {j:'KEPALA SEKSI PERLINDUNGAN DAN REHABILITASI SOSIAL',k:9,b:1,n:1,c:'Eselon',unit:'Perlindungan'},
+    {j:'KEPALA UNIT PELAKSANA TEKNIS',k:11,n:1,c:'Eselon',unit:'Eselon'},
+    {j:'KEPALA SUB BAGIAN TATA USAHA',k:9,n:1,c:'Eselon',unit:'Tata Usaha'},
+    {j:'KEPALA SEKSI PELAYANAN SOSIAL',k:9,n:1,c:'Eselon',unit:'Pelayanan Sosial'},
+    {j:'KEPALA SEKSI PERLINDUNGAN DAN REHABILITASI SOSIAL',k:9,n:1,c:'Eselon',unit:'Perlindungan'},
     ...PETA.tu.map(d=>({...d,unit:'Tata Usaha'})),
     ...PETA.ps.map(d=>({...d,unit:'Pelayanan Sosial'})),
     ...PETA.pr.map(d=>({...d,unit:'Perlindungan'}))
@@ -316,21 +320,21 @@ function renderPeta(){
   const tb=document.querySelector('#tblPeta tbody');
   tb.innerHTML='';
   all.forEach((d,i)=>{
-    const terisi=pegawaiData.filter(e=>e.jabatan===d.j).length;
+    const b=getBezetting(d.j);
     const tr=document.createElement('tr');
     if(d.c==='Fungsional')tr.className='fung';
     else if(d.c==='Eselon')tr.style.background='#FCE4D6';
-    const statusTerisi=terisi>=d.n?'✅':'⚠️';
+    const statusTerisi=b>=d.n?'✅':'⚠️';
     tr.innerHTML=`
       <td class="c">${i+1}</td>
       <td class="l">${d.unit}</td>
       <td class="l">${d.j}</td>
       <td class="c">${d.k}</td>
-      <td class="c">${d.b}</td>
+      <td class="c" style="font-weight:600;color:#1F4E79">${b}</td>
       <td class="c"><input type="number" min="0" class="edit" value="${d.n}" style="width:50px;text-align:center" onchange="updateK(${i},this.value)"></td>
-      <td class="c" id="sel${i}">${d.b-d.n}</td>
+      <td class="c" style="color:${b-d.n>=0?'#548235':'#C00000'}">${b-d.n}</td>
       <td class="c">${d.c}</td>
-      <td class="c">${statusTerisi} ${terisi}/${d.n}</td>
+      <td class="c">${statusTerisi} ${b}/${d.n}</td>
     `;
     tb.appendChild(tr);
   });
@@ -361,27 +365,27 @@ function renderHierarchy(){
           KEPALA SUB BAGIAN<br>TATA USAHA<br><span style="font-weight:normal;font-size:10px">Kelas 9</span>
         </div>
         <div style="width:2px;height:10px;background:#2E75B6;margin:0 auto"></div>
-        ${PETA.tu.map(d=>`<div style="background:${d.c==='Fungsional'?'#E2EFDA':'#f8f9fa'};border:1px solid #ddd;border-left:3px solid ${d.c==='Fungsional'?'#70AD47':'#5B9BD5'};padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
-          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | B:${d.b} K:${d.n}</span>
-        </div>`).join('')}
+        ${PETA.tu.map(d=>{const b=getBezetting(d.j);return `<div style="background:${d.c==='Fungsional'?'#E2EFDA':'#f8f9fa'};border:1px solid #ddd;border-left:3px solid ${d.c==='Fungsional'?'#70AD47':'#5B9BD5'};padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
+          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | <b style="color:#1F4E79">B:${b}</b> K:${d.n}</span>
+        </div>`;}).join('')}
       </div>
       <div style="min-width:200px">
         <div style="background:#5B9BD5;color:#fff;padding:8px 12px;border-radius:6px;font-weight:600;text-align:center;font-size:12px">
           KEPALA SEKSI<br>PELAYANAN SOSIAL<br><span style="font-weight:normal;font-size:10px">Kelas 9</span>
         </div>
         <div style="width:2px;height:10px;background:#5B9BD5;margin:0 auto"></div>
-        ${PETA.ps.map(d=>`<div style="background:#f8f9fa;border:1px solid #ddd;border-left:3px solid #5B9BD5;padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
-          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | B:${d.b} K:${d.n}</span>
-        </div>`).join('')}
+        ${PETA.ps.map(d=>{const b=getBezetting(d.j);return `<div style="background:#f8f9fa;border:1px solid #ddd;border-left:3px solid #5B9BD5;padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
+          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | <b style="color:#1F4E79">B:${b}</b> K:${d.n}</span>
+        </div>`;}).join('')}
       </div>
       <div style="min-width:200px">
         <div style="background:#ED7D31;color:#fff;padding:8px 12px;border-radius:6px;font-weight:600;text-align:center;font-size:12px">
           KEPALA SEKSI PERLINDUNGAN<br>DAN REHABILITASI SOSIAL<br><span style="font-weight:normal;font-size:10px">Kelas 9</span>
         </div>
         <div style="width:2px;height:10px;background:#ED7D31;margin:0 auto"></div>
-        ${PETA.pr.map(d=>`<div style="background:${d.c==='Fungsional'?'#E2EFDA':'#f8f9fa'};border:1px solid #ddd;border-left:3px solid ${d.c==='Fungsional'?'#70AD47':'#ED7D31'};padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
-          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | B:${d.b} K:${d.n}</span>
-        </div>`).join('')}
+        ${PETA.pr.map(d=>{const b=getBezetting(d.j);return `<div style="background:${d.c==='Fungsional'?'#E2EFDA':'#f8f9fa'};border:1px solid #ddd;border-left:3px solid ${d.c==='Fungsional'?'#70AD47':'#ED7D31'};padding:5px 8px;margin:2px 0;border-radius:3px;font-size:10px">
+          <strong>${d.j}</strong><br><span style="color:#666">Kls ${d.k} | <b style="color:#1F4E79">B:${b}</b> K:${d.n}</span>
+        </div>`;}).join('')}
       </div>
     </div>
   `;
