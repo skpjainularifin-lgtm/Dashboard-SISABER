@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sisurat — Sistem Surat Menyurat & Kepegawaian</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --bg:#0c1117;--bg2:#111922;--card:#172030;--card2:#1c2840;
+  --border:#263350;--fg:#e4eaf2;--muted:#6e829e;
+  --accent:#00d4aa;--accent2:#00f0c8;--danger:#ff4d5e;
+  --warn:#ffb020;--info:#3ea8e0;--ok:#30d670;--purple:#9b7cff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Source Sans 3',sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden}
+h1,h2,h3,.fp{font-family:'Playfair Display',serif}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+/* Sidebar */
+.sb{width:250px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);position:fixed;left:0;top:0;z-index:50;transition:transform .3s;display:flex;flex-direction:column}
+.sb-off{transform:translateX(-250px)}
+.ni{display:flex;align-items:center;gap:11px;padding:11px 18px;color:var(--muted);cursor:pointer;transition:all .2s;border-left:3px solid transparent;font-weight:500;font-size:12pt}
+.ni:hover{color:var(--fg);background:rgba(0,212,170,.05)}
+.ni.on{color:var(--accent);background:rgba(0,212,170,.09);border-left-color:var(--accent)}
+.ni i{width:18px;text-align:center;font-size:12pt}
+
+/* Main */
+.mc{margin-left:250px;min-height:100vh;transition:margin .3s}
+.mc-fm{margin-left:0}
+
+/* Components */
+.crd{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;transition:all .25s}
+.crd:hover{border-color:rgba(0,212,170,.25)}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 22px;position:relative;overflow:hidden;transition:all .25s}
+.sc:hover{transform:translateY(-2px);border-color:rgba(0,212,170,.35);box-shadow:0 6px 24px rgba(0,212,170,.06)}
+
+.btn{padding:9px 18px;border-radius:7px;font-weight:600;cursor:pointer;transition:all .2s;border:none;font-size:12pt;display:inline-flex;align-items:center;gap:7px;font-family:'Source Sans 3',sans-serif;white-space:nowrap}
+.bp{background:var(--accent);color:#0c1117}.bp:hover{background:var(--accent2);transform:translateY(-1px)}
+.bs{background:var(--card2);color:var(--fg);border:1px solid var(--border)}.bs:hover{border-color:var(--accent);color:var(--accent)}
+.bd{background:rgba(255,77,94,.12);color:var(--danger);border:1px solid rgba(255,77,94,.25)}.bd:hover{background:rgba(255,77,94,.2)}
+.bw{background:rgba(155,124,255,.12);color:var(--purple);border:1px solid rgba(155,124,255,.25)}.bw:hover{background:rgba(155,124,255,.2)}
+.sm{padding:5px 12px;font-size:12px}
+
+.fi{width:100%;padding:9px 13px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--fg);font-size:12pt;font-family:'Source Sans 3',sans-serif;transition:border .2s}
+.fi:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,170,.1)}
+.fl{display:block;font-weight:600;margin-bottom:5px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+select.fi{cursor:pointer}
+textarea.fi{resize:vertical;min-height:80px}
+
+.dt{width:100%;border-collapse:separate;border-spacing:0}
+.dt th{background:var(--bg2);color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:11px 14px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2}
+.dt td{padding:12px 14px;border-bottom:1px solid rgba(38,51,80,.5);font-size:12pt;vertical-align:middle}
+.dt tbody tr{transition:background .15s;cursor:pointer}
+.dt tbody tr:hover{background:rgba(0,212,170,.03)}
+
+.bg{padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;display:inline-block}
+.b-masuk{background:rgba(62,168,224,.13);color:#6fb8e8}
+.b-keluar{background:rgba(0,212,170,.13);color:var(--accent)}
+.b-proses{background:rgba(255,176,32,.13);color:var(--warn)}
+.b-selesai{background:rgba(48,214,112,.13);color:var(--ok)}
+.b-tertunda{background:rgba(255,77,94,.13);color:var(--danger)}
+
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.mo.av{display:flex}
+.mb{background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-height:92vh;overflow-y:auto;animation:mi .3s ease}
+@keyframes mi{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+.tc{position:fixed;top:18px;right:18px;z-index:200;display:flex;flex-direction:column;gap:9px}
+.tt{padding:13px 18px;border-radius:9px;font-weight:500;font-size:12pt;animation:ti .3s ease,to .3s ease 2.7s forwards;display:flex;align-items:center;gap:9px;min-width:260px}
+.t-ok{background:rgba(48,214,112,.13);color:var(--ok);border:1px solid rgba(48,214,112,.25)}
+.t-err{background:rgba(255,77,94,.13);color:var(--danger);border:1px solid rgba(255,77,94,.25)}
+.t-inf{background:rgba(62,168,224,.13);color:#6fb8e8;border:1px solid rgba(62,168,224,.25)}
+@keyframes ti{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes to{from{opacity:1}to{opacity:0;transform:translateX(28px)}}
+
+.glow{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;opacity:.35}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pul 2s infinite}
+@keyframes pul{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+.di{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid rgba(38,51,80,.3)}
+.di:last-child{border-bottom:none}
+.dd{width:30px;height:30px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:var(--accent)}
+
+.tb{padding:9px 18px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Source Sans 3',sans-serif;font-size:12pt}
+.tb:hover{color:var(--fg)}
+.tb.on{color:var(--accent);border-bottom-color:var(--accent)}
+
+.fu{animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.es{text-align:center;padding:50px 18px;color:var(--muted)}
+.es i{font-size:42px;margin-bottom:14px;opacity:.25}
+
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12pt;color:#fff;flex-shrink:0}
+
+/* Print */
+@media print{
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{position:absolute;left:0;top:0;width:100%;padding:40px;background:#fff;color:#111}
+  .sb,.mc header,.tc{display:none!important}
+}
+#printArea{background:#fff;color:#111;padding:40px 50px;border-radius:8px;font-family:Arial,sans-serif;font-size:12pt;line-height:1.5}
+#printArea h2{font-size:14pt;text-align:center;margin-bottom:3px;font-family:Arial,sans-serif}
+#printArea .kop{border-bottom:3px double #111;padding-bottom:12px;margin-bottom:20px;text-align:center}
+#printArea .nsur{margin-top:20px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:20px}
+#printArea .isi{text-align:justify;white-space:pre-wrap;margin:20px 0}
+#printArea .ttd{display:flex;justify-content:flex-end;text-align:center;margin-top:40px}
+#printArea .ttd div{width:220px}
+
+@media(max-width:768px){
+  .sb{transform:translateX(-250px)}
+  .sb.mo2{transform:translateX(0)}
+  .mc{margin-left:0}
+  .hide-sm{display:none}
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="tc" id="TC"></div>
+
+<!-- Sidebar -->
+<aside class="sb" id="SB">
+  <div style="padding:22px 18px;border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:11px">
+      <div style="width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#00796b);border-radius:9px;display:flex;align-items:center;justify-content:center">
+        <i class="fas fa-envelope-open-text" style="color:#fff;font-size:16px"></i>
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:17px" class="fp">Sisurat</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px">SURAT &amp; KEPEGAWAIAN</div>
+      </div>
+    </div>
+  </div>
+  <nav style="padding:14px 0;flex:1">
+    <div class="ni on" data-p="dashboard" onclick="go('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</div>
+    <div class="ni" data-p="surat-masuk" onclick="go('surat-masuk')"><i class="fas fa-inbox"></i> Surat Masuk</div>
+    <div class="ni" data-p="surat-keluar" onclick="go('surat-keluar')"><i class="fas fa-paper-plane"></i> Surat Keluar</div>
+    <div class="ni" data-p="buat-surat" onclick="go('buat-surat')"><i class="fas fa-pen-fancy"></i> Buat Surat</div>
+    <div class="ni" data-p="disposisi" onclick="go('disposisi')"><i class="fas fa-share-square"></i> Disposisi</div>
+    <div class="ni" data-p="pegawai" onclick="go('pegawai')"><i class="fas fa-users"></i> Data Pegawai</div>
+    <div class="ni" data-p="arsip" onclick="go('arsip')"><i class="fas fa-archive"></i> Arsip</div>
+  </nav>
+  <div style="padding:18px;border-top:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div class="avatar" style="background:linear-gradient(135deg,var(--purple),#6b4eff)">A</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600">Admin Surat</div>
+        <div style="font-size:10px;color:var(--muted)">Administrator</div>
+      </div>
+      <button onclick="resetData()" title="Reset data demo" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12pt"><i class="fas fa-rotate-right"></i></button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="mc" id="MC">
+  <header style="padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:40;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:14px">
+      <button onclick="togSB()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px"><i class="fas fa-bars"></i></button>
+      <h2 id="PT" style="font-size:18px;font-weight:700" class="fp">Dashboard</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="position:relative">
+        <i class="fas fa-search" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12pt"></i>
+        <input type="text" class="fi" placeholder="Cari surat / pegawai..." id="GS" oninput="gSearch()" style="width:240px;padding-left:36px">
+      </div>
+      <button onclick="toast('3 surat menunggu disposisi','i')" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;width:38px;height:38px;color:var(--muted);cursor:pointer;font-size:12pt;position:relative">
+        <i class="fas fa-bell"></i>
+        <span id="NB" style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;background:var(--danger);color:#fff;font-size:9px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700">3</span>
+      </button>
+    </div>
+  </header>
+
+  <div id="PC" style="padding:28px">
+    <section id="p-dashboard" class="fu"></section>
+    <section id="p-surat-masuk" class="fu" style="display:none"></section>
+    <section id="p-surat-keluar" class="fu" style="display:none"></section>
+    <section id="p-buat-surat" class="fu" style="display:none"></section>
+        <section id="p-surat-tugas" class="fu" style="display:none"></section>
+    <section id="p-disposisi" class="fu" style="display:none"></section>
+    <section id="p-pegawai" class="fu" style="display:none"></section>
+    <section id="p-arsip" class="fu" style="display:none"></section>
+  </div>
+</main>
+
+<!-- Modals -->
+<div class="mo" id="M1"><div class="mb" style="max-width:700px" id="M1C"></div></div>
+<div class="mo" id="M2"><div class="mb" style="max-width:800px" id="M2C"></div></div>
+<div class="mo" id="M3"><div class="mb" style="max-width:700px" id="M3C"></div></div>
+<div class="mo" id="M4"><div class="mb" style="max-width:560px" id="M4C"></div></div>
+
+<script>
+/* ===================== DATA & PERSISTENCE ===================== */
+const ORG = {
+  provinsi:'PEMERINTAH PROVINSI JAWA TIMUR',
+  dinas:'DINAS SOSIAL',
+  nama:'UPT REHABILITASI SOSIAL DISABILITAS SENSORIK NETRA',
+  nama2:'DAN ANAK YANG MEMERLUKAN PERLINDUNGAN KHUSUS',
+  kota:'MALANG',
+  alamat:'Jl. Beringin No.13, Bandungrejosari, Kec. Sukun, Kota Malang, Jawa Timur 65117',
+  telp:'(0341) 326193, (0341) 327115',
+  email:'rsdsnmkmalang@gmail.com',
+  kode:'RS-DSN',
+  kepala:'Anantya Wulandari',
+  nipKepala:'198609052011012014',
+  jabatanKepala:'Kepala UPT'
+};
+
+const SEED = {
+  suratMasuk:[
+    {id:1,na:'SM-001',ns:'423/DP/A.3/2024',tgl:'2024-12-02',dari:'Kementerian Pendidikan',ph:'Pedoman Pelaksanaan Kurikulum Merdeka',isi:'Dengan ini kami sampaikan pedoman pelaksanaan kurikulum merdeka belajar yang berlaku mulai tahun ajaran 2024/2025. Segala satuan pendidikan diwajibkan mengimplementasikan kurikulum tersebut sesuai dengan kesiapan masing-masing.',kat:'Instruksi',st:'proses',disp:[{tujuan:'Kepala Dinas',cat:'Segera sosialisasikan',tgl:'2024-12-03'}]},
+    {id:2,na:'SM-002',ns:'789/DP/B.1/2024',tgl:'2024-12-05',dari:'Pemerintah Kota Bandung',ph:'Alokasi Anggaran Renstra 2025',isi:'Bersama ini kami sampaikan alokasi anggaran untuk Rencana Strategis tahun 2025. Dinas Pendidikan mendapat alokasi sebesar Rp 45 miliar untuk program utama.',kat:'Keuangan',st:'selesai',disp:[{tujuan:'Bendahara',cat:'Review dan buat RAB',tgl:'2024-12-06'}]},
+    {id:3,na:'SM-003',ns:'156/DP/C.2/2024',tgl:'2024-12-10',dari:'KPN Kota Bandung',ph:'Pengadaan Peralatan Laboratorium',isi:'Surat penawaran pengadaan peralatan laboratorium IPA untuk 15 SMA negeri di Kota Bandung sesuai dengan DAK yang telah dialokasikan.',kat:'Pengadaan',st:'tertunda',disp:[]},
+    {id:4,na:'SM-004',ns:'234/DP/D.4/2024',tgl:'2024-12-12',dari:'Bappeda Kota Bandung',ph:'Evaluasi Program Indonesia Pintar',isi:'Mohon laporan evaluasi pelaksanaan program Indonesia Pintar semester ganjil 2024/2025 disampaikan paling lambat tanggal 20 Desember 2024.',kat:'Laporan',st:'proses',disp:[{tujuan:'Seksi Dikdas',cat:'Siapkan data evaluasi',tgl:'2024-12-13'}]},
+    {id:5,na:'SM-005',ns:'567/DP/E.1/2024',tgl:'2024-12-15',dari:'Kemensos RI',ph:'Bantuan Sosial Pendidikan',isi:'Informasi mengenai penyaluran bantuan sosial pendidikan bagi keluarga tidak mampu melalui Program Keluarga Harapan (PKH) semester genap 2024/2025.',kat:'Sosial',st:'selesai',disp:[]},
+    {id:6,na:'SM-006',ns:'890/DP/F.3/2024',tgl:'2024-12-18',dari:'LPMP Jawa Barat',ph:'Jadwal Akreditasi Sekolah',isi:'Bersama ini kami informasikan jadwal akreditasi untuk 30 satuan pendidikan di wilayah Kota Bandung yang akan dilaksanakan pada bulan Januari-Maret 2025.',kat:'Instruksi',st:'proses',disp:[]}
+  ],
+  suratKeluar:[
+    {id:1,na:'SK-001',ns:'001/DP/G.1/2024',tgl:'2024-12-01',tujuan:'Seluruh Kepala Sekolah',ph:'Pembagian Tugas Guru Semester Genap',isi:'Dengan ini ditetapkan pembagian tugas mengajar guru untuk semester genap tahun ajaran 2024/2025. Setiap kepala sekolah wajib melaporkan realokasi guru paling lambat tanggal 10 Januari 2025.',kat:'Penetapan',st:'selesai'},
+    {id:2,na:'SK-002',ns:'002/DP/G.2/2024',tgl:'2024-12-04',tujuan:'Dinas Keuangan Kota',ph:'Permohonan Pencairan Dana BOPTN',isi:'Bersama ini kami ajukan permohonan pencairan Dana Bantuan Operasional Pendidikan Tidak Negeri (BOPTN) tahap II tahun 2024 sebesar Rp 2,3 miliar.',kat:'Keuangan',st:'selesai'},
+    {id:3,na:'SK-003',ns:'003/DP/G.3/2024',tgl:'2024-12-08',tujuan:'PTUN Bandung',ph:'Keberatan atas Keputusan Penilaian',isi:'Dengan ini kami sampaikan keberatan atas keputusan penilaian kinerja instansi yang dinilai tidak mencerminkan kondisi aktual pelaksanaan program kerja.',kat:'Hukum',st:'proses'},
+    {id:4,na:'SK-004',ns:'004/DP/G.4/2024',tgl:'2024-12-11',tujuan:'Kepala SMPN 5 Bandung',ph:'Surat Izin Penyelenggaraan Ujian',isi:'Diberikan izin penyelenggaraan ujian akhir semester ganjil 2024/2025 kepada SMPN 5 Bandung sesuai dengan jadwal yang telah ditetapkan.',kat:'Izin',st:'selesai'},
+    {id:5,na:'SK-005',ns:'005/DP/G.5/2024',tgl:'2024-12-14',tujuan:'Kemenkes RI',ph:'Laporan Pelaksanaan UKS',isi:'Bersama ini kami sampaikan laporan pelaksanaan Unit Kesehatan Sekolah (UKS) tahun 2024 meliputi pemeriksaan kesehatan siswa, guru, dan tenaga kependidikan.',kat:'Laporan',st:'selesai'}
+  ],
+  pegawai:[
+  {id:1,nip:"198609052011012014",nama:"Anantya Wulandari",jekel:"",jabatan:"KEPALA UNIT PELAKSANA TEKNIS",gol:"Pembina / (IVa)",divisi:"Eselon",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-2",statusPeg:"PNS"},
+  {id:2,nip:"197911212009031002",nama:"Helmi Kurniawan",jekel:"",jabatan:"KEPALA SUB BAGIAN TATA USAHA",gol:"Penata Muda Tk. I / (III/b)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S1",statusPeg:"PNS"},
+  {id:3,nip:"197707192008011012",nama:"Mustakim",jekel:"",jabatan:"PENGADMINISTRASI PERKANTORAN",gol:"Penata Muda / (III/a)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:4,nip:"199409222025042005",nama:"Nurmasari, Amd",jekel:"",jabatan:"PENATA LAKSANA BARANG TERAMPIL",gol:"Pengatur / (II/c)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"DIII",statusPeg:"PNS"},
+  {id:5,nip:"199704092025042008",nama:"Nevi Yunitasari",jekel:"",jabatan:"PENATA LAKSANA BARANG TERAMPIL",gol:"Pengatur / (II/c)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"DIII",statusPeg:"PNS"},
+  {id:6,nip:"199907242025042010",nama:"Aina Anggraeni",jekel:"",jabatan:"PENATA LAKSANA BARANG TERAMPIL",gol:"Pengatur / (II/c)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"D-III",statusPeg:"PNS"},
+  {id:7,nip:"200203102025042007",nama:"Khoirin Aideksa Falantino",jekel:"",jabatan:"PENATA LAKSANA BARANG TERAMPIL",gol:"Pengatur / (II/c)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"D-III",statusPeg:"PNS"},
+  {id:8,nip:"198311182009011003",nama:"Jainul Arifin",jekel:"",jabatan:"PENGADMINISTRASI PERKANTORAN",gol:"Penata Muda / (III/a)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PNS"},
+  {id:9,nip:"198106182009011005",nama:"Miswandi",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda / (III/a)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:10,nip:"197705062010011004",nama:"Rofi Anama Putra",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Pengatur / (II/c)",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:11,nip:"197710272009011009",nama:"Joko Sulianto",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Pengatur Muda- II/a",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:12,nip:"199202262025211004",nama:"Ari Wahyudi, S.E.",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"IX",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S1",statusPeg:"PPPK"},
+  {id:13,nip:"199112172025211007",nama:"Mohamad Risqi Indrayana",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PPPK"},
+  {id:14,nip:"197010212025211021",nama:"Slamet Nuriadi",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:15,nip:"198004242025211096",nama:"Sugiono",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:16,nip:"198402292025211065",nama:"Rudi Feriyanto",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:17,nip:"197704162025211056",nama:"R. Sapto Winarno",jekel:"",jabatan:"PENGELOLA UMUM OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTP",statusPeg:"P3K PW"},
+  {id:18,nip:"199409142025212110",nama:"Lauda Vinca Dasanta",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"P3K PW"},
+  {id:19,nip:"197802112025211034",nama:"Fathoni Darmawan",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:20,nip:"197305012025211039",nama:"Muhamad",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:21,nip:"198901012025211277",nama:"Surya Adi Utama",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:22,nip:"199206022025211147",nama:"Moch. Anwar",jekel:"",jabatan:"PENGELOLA UMUM OPERASIONAL",gol:"-",divisi:"sub bagian tata Usaha",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:23,nip:"196909131995012001",nama:"Siti Zulaifah, S.E.",jekel:"",jabatan:"KEPALA SEKSI PELAYANAN SOSIAL",gol:"III/d - Penata Tingkat I",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PNS"},
+  {id:24,nip:"197004122008011015",nama:"Ridwan",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda / (III/a)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:25,nip:"198107032009011005",nama:"Titut Eko Yulianto",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda / (III/a)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:26,nip:"198205202009012001",nama:"Rena Cintia Dewi",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda / (III/a)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:27,nip:"197607232009011002",nama:"Eko Julianto",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda / (III/a)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:28,nip:"198004302010012001",nama:"Nurul Hidayati, S.Sos.",jekel:"",jabatan:"PENGOLAH DATA DAN INFORMASI",gol:"Penata Muda / (III/a)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S1",statusPeg:"PNS"},
+  {id:29,nip:"197312292008011005",nama:"Muslimin, S.A.P.",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda / (III/a)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PNS"},
+  {id:30,nip:"197707112009012002",nama:"Nurul Hidayah",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Pengatur Tk. I / (II/d)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:31,nip:"197204062008012018",nama:"Prapti",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Pengatur Tk. I / (II/d)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:32,nip:"198303152010011005",nama:"Marnianto",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Pengatur Tk. I / (II/d)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:33,nip:"198411012009011002",nama:"Mujianto",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Pengatur / (II/c)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:34,nip:"199708012025042010",nama:"Anggei Wulandari, A.Md.AK",jekel:"",jabatan:"PENGELOLA LAYANAN KESEHATAN",gol:"Pengatur / (II/c)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"DIII",statusPeg:"PNS"},
+  {id:35,nip:"196901012009011004",nama:"Djurijono",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Pengatur Muda / (II/a)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:36,nip:"197708132009011004",nama:"Sarjiono",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Pengatur Muda / (II/a)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:37,nip:"197409061999031005",nama:"Slamet Basuki",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda Tingkat I / (III/b)",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:38,nip:"199611082025212093",nama:"Anggi Dika Ulandari",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:39,nip:"200007242025212047",nama:"Sri Wahyu Pusponegoro",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:40,nip:"198303162025212053",nama:"Siti Rahayu Ningsih",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:41,nip:"198106102025211119",nama:"Abdul Wahid",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:42,nip:"198907152025212114",nama:"Eli Sri Mujiati",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:43,nip:"198310262025211069",nama:"Rudy Wijayanto",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:44,nip:"197407252025211052",nama:"Abdul Kholiq, S.H.",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"P3K PW"},
+  {id:45,nip:"198005022025211089",nama:"Indras Moro",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:46,nip:"200007122025212060",nama:"Siva Yuli Maulida",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:47,nip:"197808192025212030",nama:"Warsini",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:48,nip:"197409212025212022",nama:"Kusdiana Diah Anasta, S.E.",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"-",divisi:"Seksi Pelayanan Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"P3K PW"},
+  {id:49,nip:"197404151998032007",nama:"Sulistyoningsih, A.Ks,M.Si.",jekel:"",jabatan:"KEPALA SEKSI PERLINDUNGAN DAN REHABILITASI SOSIAL",gol:"Pembina / ( IV/a)",divisi:"Perlindungan & Rehab",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-2",statusPeg:"PNS"},
+  {id:50,nip:"197012281998032004",nama:"Iwit Hariyanti, S. Sos.",jekel:"",jabatan:"PENELAAH TEKNIS KEBIJAKAN",gol:"Penata Tk. I / (III/d)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S1",statusPeg:"PNS"},
+  {id:51,nip:"196908281992022002",nama:"Pipin Naomi Mattea",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Tk. I / (III/d)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:52,nip:"196908241999031007",nama:"Wiwid Agus Sutriyono",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda Tk. I / (III/b)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:53,nip:"199605212022042001",nama:"Tetri Nabila Nurbaiti, S.Tr.Sos.",jekel:"",jabatan:"PEKERJA SOSIAL AHLI PERTAMA",gol:"Penata Muda Tk. I / (III/b)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"DIV",statusPeg:"PNS"},
+  {id:54,nip:"198401012010012004",nama:"Sulistiowati, S.M.",jekel:"",jabatan:"PENGOLAH DATA DAN INFORMASI",gol:"Penata Muda / (III/a)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PNS"},
+  {id:55,nip:"197410052009011003",nama:"Hadi",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda / (III/a)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:56,nip:"197611292010012002",nama:"Lilik Dwi Lestari",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"Penata Muda / (III/a)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:57,nip:"198211072010011005",nama:"Ahmat Choiri",jekel:"",jabatan:"PENGADMINISTRASI PERKANTORAN",gol:"Penata Muda / (III/a)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:58,nip:"197507022010011005",nama:"Ken Edy Widjaja",jekel:"",jabatan:"PEKERJA SOSIAL TERAMPIL",gol:"Pengatur / (II/c)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:59,nip:"197310142009011001",nama:"Ratemuji",jekel:"",jabatan:"PENGADMINISTRASI PERKANTORAN",gol:"Pengatur Tingkat I -(II/d )",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"PNS"},
+  {id:60,nip:"198206262009011006",nama:"Jutrianto, S.A.P.",jekel:"",jabatan:"PENGADMINISTRASI PERKANTORAN",gol:"Penata Muda / (III/a)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PNS"},
+  {id:61,nip:"198707162020122010",nama:"Merielle Yuditha Canary, S.Pd., M.Kesos.",jekel:"",jabatan:"WIDYA ISWARA",gol:"Penata Muda Tingkat I / (III/b)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-2",statusPeg:"PNS"},
+  {id:62,nip:"198105122010011001",nama:"Arif Dwi Nanta Putra, S.A.P.",jekel:"",jabatan:"PENGADMINISTRASI PERKANTORAN",gol:"Penata Muda / (III/a)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PNS"},
+  {id:63,nip:"198312312009011006",nama:"Samuji, S.A.P.",jekel:"",jabatan:"PENGOLAH DATA DAN INFORMASI",gol:"Penata Muda / (III/a)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PNS"},
+  {id:64,nip:"197304252014122002",nama:"Siti Rofikhoh, S.Ag.",jekel:"",jabatan:"PENGOLAH DATA DAN INFORMASI",gol:"Penata / (III/c)",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PNS"},
+  {id:65,nip:"198108282025212006",nama:"Dina Muliana Sari, S.Pt",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"PPPK"},
+  {id:66,nip:"197208122025212021",nama:"Lailiel Moeflichah, SE",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S1",statusPeg:"P3K PW"},
+  {id:67,nip:"198203022025211112",nama:"Zaki Firmansyah, S.Psi.",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S1",statusPeg:"P3K PW"},
+  {id:68,nip:"198404042025211157",nama:"Wahyu Sukmajati, S.Kom.",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S1",statusPeg:"P3K PW"},
+  {id:69,nip:"199106222025211094",nama:"Adimas Suryansyah, S.Sos.",jekel:"",jabatan:"PENATA LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S1",statusPeg:"P3K PW"},
+  {id:70,nip:"197209132025211029",nama:"Hariyono",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:71,nip:"198702022025211180",nama:"Wahyu Feri Eka Wijaya",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:72,nip:"198512182025211088",nama:"Aris Sudarmanto",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:73,nip:"199809042025212097",nama:"Megisteria Kaleby",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:74,nip:"200206212025212010",nama:"Azzahrah Mumtaz Firdaus",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:75,nip:"199709092025211130",nama:"Aldion Ebenheazer Medellu",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:76,nip:"197307092025211037",nama:"Suwono",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+  {id:77,nip:"197704012025211078",nama:"Dian Bagus Aryanto, S.Psi",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"S-1",statusPeg:"P3K PW"},
+  {id:78,nip:"199104172025212127",nama:"Umi Fitriani",jekel:"",jabatan:"OPERATOR LAYANAN OPERASIONAL",gol:"-",divisi:"seksi Perlindungan & Rehabilitasi Sosial",telp:"-",email:"-",tglMasuk:"2000-01-01",pendidikan:"SLTA",statusPeg:"P3K PW"},
+],
+  suratTugas:[
+    {id:1,na:'ST-001',ns:'ST.001/RS-DSN/12/2024',tgl:'2024-12-10',kota:'Malang',
+     dasar:['Peraturan Kepala Daerah tentang tugas dan fungsi UPT','Surat Keputusan Kepala Dinas Sosial Provinsi Jawa Timur Nomor 188/.../2024 tentang Pembentukan Tim'],
+     pegawai:[{id:5,nama:'Dedi Kurniawan, S.Pd.',nip:'199001152011031005',jabatan:'Staf Seksi Dikdas'},{id:6,nama:'Maya Sari, S.Pd.',nip:'199207202012042006',jabatan:'Staf Seksi Dikmen'}],
+     hariTanggal:'Rabu, 11 Desember 2024',waktu:'08.00 - 16.00 WIB',tempat:'Aula UPT Rehabilitasi Sosial DSN Malang',
+     tujuan:'Melaksanakan kegiatan rapat koordinasi penyusunan program kerja tahun 2025 UPT Rehabilitasi Sosial Disabilitas Sensorik Netra dan Anak yang Memerlukan Perlindungan Khusus.'},
+    {id:2,na:'ST-002',ns:'ST.002/RS-DSN/12/2024',tgl:'2024-12-15',kota:'Malang',
+     dasar:['Program Kerja Tahun 2024 UPT Rehabilitasi Sosial DSN Malang'],
+     pegawai:[{id:3,nama:'Bambang Wijaya, S.E.',nip:'198208102008011003',jabatan:'Bendahara'}],
+     hariTanggal:'Senin, 16 Desember 2024',waktu:'09.00 - 12.00 WIB',tempat:'Dinas Sosial Provinsi Jawa Timur, Surabaya',
+     tujuan:'Menghadiri rapat koordinasi penyerapan anggaran DAK tahun anggaran 2025.'}
+  ]
+};
+
+let state = load();
+
+function load(){
+  try{
+    const s = localStorage.getItem('sisurat_state');
+    if(s) return JSON.parse(s);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(SEED));
+}
+function save(){
+  localStorage.setItem('sisurat_state', JSON.stringify(state));
+}
+function resetData(){
+  if(confirm('Reset semua data ke data demo awal?')){
+    localStorage.removeItem('sisurat_state');
+    state = JSON.parse(JSON.stringify(SEED));
+    save();
+    go('dashboard');
+    toast('Data berhasil direset','ok');
+  }
+}
+
+let nextIdMasuk = () => Math.max(0,...state.suratMasuk.map(s=>s.id))+1;
+let nextIdKeluar = () => Math.max(0,...state.suratKeluar.map(s=>s.id))+1;
+let nextIdPeg = () => Math.max(0,...state.pegawai.map(s=>s.id))+1;
+
+/* ===================== UTIL ===================== */
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const BULAN_S = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+
+function fmtDate(s){
+  const d = new Date(s);
+  return `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
+}
+function fmtDateShort(s){
+  const d = new Date(s);
+  return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+}
+function genNoSurat(){
+  const now = new Date();
+  const urut = String(state.suratKeluar.length+1).padStart(3,'0');
+  const romawi = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+  return `${urut}/${ORG.kode}/G.${romawi[now.getMonth()]}/${now.getFullYear()}`;
+}
+function genNoAgenda(t){
+  if(t==='masuk') return 'SM-'+String(Math.max(...state.suratMasuk.map(s=>parseInt(s.na.split('-')[1])||0),0)+1).padStart(3,'0');
+  return 'SK-'+String(Math.max(...state.suratKeluar.map(s=>parseInt(s.na.split('-')[1])||0),0)+1).padStart(3,'0');
+}
+function statusLabel(s){return s==='proses'?'Proses':s==='selesai'?'Selesai':'Tertunda';}
+function initials(name){
+  return name.split(' ').filter(w=>!['Dr','H','M','S','Hj'].includes(w.replace(/[.,]/g,''))).slice(0,2).map(w=>w[0]).join('').toUpperCase()||name[0].toUpperCase();
+}
+function avatarColor(name){
+  const colors=['#3ea8e0','#00d4aa','#ffb020','#9b7cff','#ff6b9d','#30d670','#ff8a4c','#5d8bff'];
+  let h=0;for(let i=0;i<name.length;i++)h+=name.charCodeAt(i);
+  return colors[h%colors.length];
+}
+
+function toast(msg,type='ok'){
+  const c = document.getElementById('TC');
+  const t = document.createElement('div');
+  t.className = 'tt '+(type==='ok'?'t-ok':type==='err'?'t-err':'t-inf');
+  const icons = {ok:'fa-check-circle',err:'fa-exclamation-circle',i:'fa-info-circle'};
+  t.innerHTML = `<i class="fas ${icons[type]||icons.i}"></i> ${msg}`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),3100);
+}
+function openM(id){document.getElementById(id).classList.add('av')}
+function closeM(id){document.getElementById(id).classList.remove('av')}
+function togSB(){
+  const sb=document.getElementById('SB'),mc=document.getElementById('MC');
+  if(window.innerWidth<=768){sb.classList.toggle('mo2')}
+  else{sb.classList.toggle('sb-off');mc.classList.toggle('mc-fm')}
+}
+
+/* ===================== NAVIGATION ===================== */
+let currentPage = 'dashboard';
+function go(page){
+  currentPage = page;
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  const el = document.querySelector(`.ni[data-p="${page}"]`);
+  if(el) el.classList.add('on');
+  const titles = {
+    'dashboard':'Dashboard','surat-masuk':'Surat Masuk','surat-keluar':'Surat Keluar',
+    'buat-surat':'Buat Surat Baru','surat-tugas':'Surat Tugas','disposisi':'Disposisi Surat','pegawai':'Data Pegawai','arsip':'Arsip Surat'
+  };
+  document.getElementById('PT').textContent = titles[page]||'Dashboard';
+  document.querySelectorAll('#PC > section').forEach(s=>s.style.display='none');
+  const target = document.getElementById('p-'+page);
+  if(!target){console.warn('Halaman tidak ditemukan:',page);return}
+  target.style.display='block';
+  const r = {
+    'dashboard':renderDashboard,'surat-masuk':renderSuratMasuk,'surat-keluar':renderSuratKeluar,
+    'buat-surat':renderBuatSurat,'surat-tugas':renderSuratTugas,'disposisi':renderDisposisi,'pegawai':renderPegawai,'arsip':renderArsip
+  };
+  if(r[page]) r[page]();
+  if(window.innerWidth<=768) document.getElementById('SB').classList.remove('mo2');
+}
+
+/* ===================== DASHBOARD ===================== */
+function renderDashboard(){
+  const sm = state.suratMasuk.length;
+  const sk = state.suratKeluar.length;
+  const dispPending = state.suratMasuk.filter(s=>s.st==='proses').length;
+  const totalArsip = state.suratMasuk.filter(s=>s.st==='selesai').length + state.suratKeluar.filter(s=>s.st==='selesai').length;
+  const pegawai = state.pegawai.length;
+  const suratTugas = state.suratTugas.length;
+  document.getElementById('NB').textContent = dispPending;
+
+  const c = document.getElementById('p-dashboard');
+  c.innerHTML = `
+    <div style="position:relative;overflow:hidden;border-radius:16px;margin-bottom:24px;padding:30px;background:linear-gradient(135deg,var(--card),var(--card2))">
+      <div class="glow" style="width:200px;height:200px;background:var(--accent);top:-60px;right:-40px"></div>
+      <div class="glow" style="width:150px;height:150px;background:#00796b;bottom:-40px;left:20%"></div>
+      <div style="position:relative;z-index:1">
+        <h1 style="font-size:26px;font-weight:800;margin-bottom:6px" class="fp">Selamat Datang, Admin</h1>
+        <p style="color:var(--muted);font-size:12pt">Sistem Surat Menyurat &amp; Kepegawaian — ${ORG.nama}</p>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+          <div class="pulse"></div>
+          <span style="color:var(--accent);font-size:12px;font-weight:600">Sistem Aktif</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px">
+      ${statCard('Surat Masuk',sm,'fa-inbox','var(--info)','Bulan ini','surat-masuk')}
+      ${statCard('Surat Keluar',sk,'fa-paper-plane','var(--accent)','Bulan ini','surat-keluar')}
+      ${statCard('Perlu Disposisi',dispPending,'fa-share-square','var(--warn)','Menunggu proses','disposisi')}
+      ${statCard('Total Pegawai',pegawai,'fa-users','var(--purple)','Aktif terdaftar','pegawai')}
+      ${statCard('Surat Tugas',suratTugas,'fa-file-signature','var(--purple)','Surat tugas terbit','surat-tugas')}
+      ${statCard('Total Arsip',totalArsip,'fa-archive','var(--ok)','Surat selesai','arsip')}
+    </div>
+
+    <div class="grid2">
+      <div class="crd">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-clock" style="color:var(--accent);font-size:12pt"></i> Surat Terbaru
+        </h3>
+        <div id="recentList"></div>
+      </div>
+      <div class="crd">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-route" style="color:var(--warn);font-size:12pt"></i> Disposisi Terbaru
+        </h3>
+        <div id="dispList"></div>
+      </div>
+    </div>
+
+    <div class="crd" style="margin-top:18px">
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        <i class="fas fa-chart-bar" style="color:var(--accent);font-size:12pt"></i> Statistik Surat Bulanan
+      </h3>
+      <canvas id="chartBulanan" height="180" style="width:100%"></canvas>
+    </div>
+  `;
+
+  // Recent letters
+  const allRecent = [
+    ...state.suratMasuk.map(s=>({...s,type:'masuk',pihak:s.dari})),
+    ...state.suratKeluar.map(s=>({...s,type:'keluar',pihak:s.tujuan}))
+  ].sort((a,b)=>new Date(b.tgl)-new Date(a.tgl)).slice(0,6);
+  document.getElementById('recentList').innerHTML = allRecent.length? allRecent.map(s=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(38,51,80,.3);cursor:pointer" onclick="${s.type==='masuk'?`detailMasuk(${s.id})`:`detailKeluar(${s.id})`}">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <div style="width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${s.type==='masuk'?'rgba(62,168,224,.12)':'rgba(0,212,170,.12)'}">
+          <i class="fas ${s.type==='masuk'?'fa-arrow-down':'fa-arrow-up'}" style="font-size:12px;color:${s.type==='masuk'?'#6fb8e8':'var(--accent)'}"></i>
+        </div>
+        <div style="min-width:0">
+          <div style="font-weight:600;font-size:12pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.ph}</div>
+          <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.pihak}</div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:8px">
+        <span class="bg ${s.type==='masuk'?'b-masuk':'b-keluar'}">${s.type==='masuk'?'Masuk':'Keluar'}</span>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${fmtDateShort(s.tgl)}</div>
+      </div>
+    </div>
+  `).join('') : '<div class="es" style="padding:24px"><i class="fas fa-inbox"></i><p>Belum ada surat</p></div>';
+
+  // Recent disposisi
+  const allDisp = state.suratMasuk.filter(s=>s.disp&&s.disp.length>0).slice(0,5);
+  document.getElementById('dispList').innerHTML = allDisp.length? allDisp.map(s=>`
+    <div class="di">
+      <div class="dd"><i class="fas fa-share"></i></div>
+      <div style="min-width:0">
+        <div style="font-weight:600;font-size:12pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.ph}</div>
+        <div style="font-size:12px;color:var(--accent)">Ke: ${s.disp[s.disp.length-1].tujuan}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.disp[s.disp.length-1].cat} — ${fmtDateShort(s.disp[s.disp.length-1].tgl)}</div>
+      </div>
+    </div>
+  `).join('') : '<div class="es" style="padding:24px"><i class="fas fa-inbox"></i><p>Belum ada disposisi</p></div>';
+
+  drawChart();
+}
+
+function statCard(label,val,icon,color,sub,page){
+  return `<div class="sc" style="border-left:3px solid ${color};cursor:pointer" onclick="go('${page}')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${label}</div>
+        <div style="font-size:28px;font-weight:800;color:${color}">${val}</div>
+      </div>
+      <i class="fas ${icon}" style="font-size:24px;color:${color};opacity:.3"></i>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">${sub}</div>
+  </div>`;
+}
+
+function drawChart(){
+  const canvas = document.getElementById('chartBulanan');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.parentElement.clientWidth - 44;
+  const H = canvas.height = 200;
+  const dataM = [3,5,4,7,6,8,5,9,7,6,4,state.suratMasuk.length];
+  const dataK = [2,3,5,4,6,5,7,4,6,5,3,state.suratKeluar.length];
+  const maxV = Math.max(...dataM,...dataK)+2;
+  const cl=40, cb=H-25, ct=15, ch=cb-ct;
+  const barW = Math.max(8,(W-60)/12-8);
+  const gap = (W-cl-20)/12;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(38,51,80,.4)';ctx.lineWidth=.5;
+  for(let i=0;i<=4;i++){
+    const y=ct+(ch/4)*i;
+    ctx.beginPath();ctx.moveTo(cl,y);ctx.lineTo(W,y);ctx.stroke();
+    ctx.fillStyle='#6e829e';ctx.font='10px Source Sans 3';ctx.textAlign='right';
+    ctx.fillText(Math.round(maxV-(maxV/4)*i),cl-6,y+4);
+  }
+  for(let i=0;i<12;i++){
+    const x=cl+10+i*gap;
+    const hM=(dataM[i]/maxV)*ch, hK=(dataK[i]/maxV)*ch;
+    ctx.fillStyle='rgba(62,168,224,.6)';
+    ctx.fillRect(x,cb-hM,barW/2-1,hM);
+    ctx.fillStyle='rgba(0,212,170,.6)';
+    ctx.fillRect(x+barW/2+1,cb-hK,barW/2-1,hK);
+    ctx.fillStyle='#6e829e';ctx.font='10px Source Sans 3';ctx.textAlign='center';
+    ctx.fillText(BULAN_S[i],x+barW/2,cb+14);
+  }
+  ctx.fillStyle='rgba(62,168,224,.8)';ctx.fillRect(W-150,8,10,10);
+  ctx.fillStyle='#6e829e';ctx.font='11px Source Sans 3';ctx.textAlign='left';
+  ctx.fillText('Masuk',W-136,17);
+  ctx.fillStyle='rgba(0,212,170,.8)';ctx.fillRect(W-75,8,10,10);
+  ctx.fillStyle='#6e829e';ctx.fillText('Keluar',W-61,17);
+}
+
+/* ===================== SURAT MASUK ===================== */
+let fM_status='semua', fM_q='';
+function renderSuratMasuk(){
+  const c = document.getElementById('p-surat-masuk');
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+      <button class="bp" onclick="formTambahMasuk()"><i class="fas fa-plus"></i> Tambah Surat Masuk</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="fi" style="width:150px" onchange="fM_status=this.value;renderSuratMasuk()">
+          ${['semua','proses','selesai','tertunda'].map(s=>`<option value="${s}" ${fM_status===s?'selected':''}>${s==='semua'?'Semua Status':statusLabel(s)}</option>`).join('')}
+        </select>
+        <div style="position:relative">
+          <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+          <input type="text" class="fi" placeholder="Cari..." style="width:180px;padding-left:32px" value="${fM_q}" oninput="fM_q=this.value;renderSuratMasuk()">
+        </div>
+      </div>
+    </div>
+    <div class="crd" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>No. Agenda</th><th>No. Surat</th><th>Tanggal</th><th>Pengirim</th><th>Perihal</th><th>Kategori</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="tbM"></tbody>
+        </table>
+      </div>
+    </div>`;
+  let f = [...state.suratMasuk];
+  if(fM_status!=='semua') f=f.filter(s=>s.st===fM_status);
+  if(fM_q){const q=fM_q.toLowerCase();f=f.filter(s=>s.ns.toLowerCase().includes(q)||s.dari.toLowerCase().includes(q)||s.ph.toLowerCase().includes(q))}
+  const tb = document.getElementById('tbM');
+  tb.innerHTML = f.length? f.map(s=>`
+    <tr onclick="detailMasuk(${s.id})">
+      <td style="font-weight:600;color:var(--accent)">${s.na}</td>
+      <td>${s.ns}</td>
+      <td style="white-space:nowrap">${fmtDateShort(s.tgl)}</td>
+      <td>${s.dari}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.ph}</td>
+      <td><span style="background:var(--card2);padding:3px 8px;border-radius:4px;font-size:11px">${s.kat}</span></td>
+      <td><span class="bg b-${s.st}">${statusLabel(s.st)}</span></td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="bs sm" onclick="detailMasuk(${s.id})" title="Detail"><i class="fas fa-eye"></i></button>
+        <button class="bw sm" onclick="formDisposisi(${s.id})" title="Disposisi"><i class="fas fa-share"></i></button>
+        <button class="bd sm" onclick="hapusMasuk(${s.id})" title="Hapus"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="8"><div class="es"><i class="fas fa-inbox"></i><p>Tidak ada surat masuk</p></div></td></tr>`;
+}
+
+function detailMasuk(id){
+  const s = state.suratMasuk.find(x=>x.id===id); if(!s) return;
+  document.getElementById('M1C').innerHTML = `
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+        <div>
+          <span class="bg b-masuk">Surat Masuk</span>
+          <h2 style="font-size:19px;font-weight:700;margin-top:8px" class="fp">${s.ph}</h2>
+        </div>
+        <button onclick="closeM('M1')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="grid2" style="margin-bottom:18px">
+        ${meta('No. Agenda',s.na)}${meta('No. Surat',s.ns)}
+        ${meta('Tanggal',fmtDate(s.tgl))}${meta('Pengirim',s.dari)}
+        ${meta('Kategori',s.kat)}${meta('Status','<span class="bg b-'+s.st+'">'+statusLabel(s.st)+'</span>')}
+      </div>
+      ${meta('Isi Surat')}
+      <div style="background:var(--bg);padding:14px;border-radius:8px;line-height:1.7;white-space:pre-wrap;margin-bottom:16px">${s.isi}</div>
+      ${s.disp&&s.disp.length? `
+        ${meta('Riwayat Disposisi')}
+        <div style="margin-bottom:16px">
+        ${s.disp.map(d=>`<div class="di"><div class="dd"><i class="fas fa-share"></i></div>
+          <div><div style="font-weight:600">${d.tujuan}</div><div style="color:var(--muted);font-size:12pt">${d.cat}</div><div style="color:var(--accent);font-size:12px">${fmtDateShort(d.tgl)}</div></div></div>`).join('')}
+        </div>`:''}
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="bs" onclick="cetakSurat('masuk',${s.id})"><i class="fas fa-print"></i> Cetak</button>
+        <button class="bp" onclick="closeM('M1');formDisposisi(${s.id})"><i class="fas fa-share"></i> Disposisi</button>
+      </div>
+    </div>`;
+  openM('M1');
+}
+
+function formTambahMasuk(){
+  document.getElementById('M2C').innerHTML = `
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+        <h2 style="font-size:19px;font-weight:700" class="fp">Tambah Surat Masuk</h2>
+        <button onclick="closeM('M2')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <form onsubmit="submitMasuk(event)">
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">No. Surat</label><input type="text" class="fi" name="ns" required placeholder="Contoh: 123/DP/A.1/2024"></div>
+          <div><label class="fl">Tanggal</label><input type="date" class="fi" name="tgl" required value="${new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div style="margin-bottom:14px"><label class="fl">Pengirim</label><input type="text" class="fi" name="dari" required placeholder="Instansi/lembaga pengirim"></div>
+        <div style="margin-bottom:14px"><label class="fl">Perihal</label><input type="text" class="fi" name="ph" required placeholder="Subjek surat"></div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Kategori</label><select class="fi" name="kat">${['Instruksi','Keuangan','Laporan','Pengadaan','Sosial','Undangan','Lainnya'].map(k=>`<option>${k}</option>`).join('')}</select></div>
+          <div><label class="fl">Status</label><select class="fi" name="st"><option value="proses">Proses</option><option value="tertunda">Tertunda</option><option value="selesai">Selesai</option></select></div>
+        </div>
+        <div style="margin-bottom:18px"><label class="fl">Isi Surat</label><textarea class="fi" name="isi" required rows="5" placeholder="Ketik isi, ringkasan, atau catatan surat..."></textarea></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="bs" onclick="closeM('M2')">Batal</button>
+          <button type="submit" class="bp"><i class="fas fa-save"></i> Simpan</button>
+        </div>
+      </form>
+    </div>`;
+  openM('M2');
+}
+
+function submitMasuk(e){
+  e.preventDefault();
+  const f = e.target;
+  state.suratMasuk.unshift({id:nextIdMasuk(),na:genNoAgenda('masuk'),ns:f.ns.value,tgl:f.tgl.value,dari:f.dari.value,ph:f.ph.value,isi:f.isi.value,kat:f.kat.value,st:f.st.value,disp:[]});
+  save(); closeM('M2'); renderSuratMasuk(); toast('Surat masuk berhasil ditambahkan');
+}
+
+function hapusMasuk(id){
+  if(!confirm('Hapus surat masuk ini?')) return;
+  state.suratMasuk = state.suratMasuk.filter(s=>s.id!==id);
+  save(); renderSuratMasuk(); toast('Surat masuk dihapus','err');
+}
+
+/* ===================== SURAT KELUAR ===================== */
+let fK_status='semua', fK_q='';
+function renderSuratKeluar(){
+  const c = document.getElementById('p-surat-keluar');
+  c.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+      <button class="bp" onclick="formTambahKeluar()"><i class="fas fa-plus"></i> Tambah Surat Keluar</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="fi" style="width:150px" onchange="fK_status=this.value;renderSuratKeluar()">
+          ${['semua','proses','selesai','tertunda'].map(s=>`<option value="${s}" ${fK_status===s?'selected':''}>${s==='semua'?'Semua Status':statusLabel(s)}</option>`).join('')}
+        </select>
+        <div style="position:relative">
+          <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+          <input type="text" class="fi" placeholder="Cari..." style="width:180px;padding-left:32px" value="${fK_q}" oninput="fK_q=this.value;renderSuratKeluar()">
+        </div>
+      </div>
+    </div>
+    <div class="crd" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>No. Agenda</th><th>No. Surat</th><th>Tanggal</th><th>Tujuan</th><th>Perihal</th><th>Kategori</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="tbK"></tbody>
+        </table>
+      </div>
+    </div>`;
+  let f = [...state.suratKeluar];
+  if(fK_status!=='semua') f=f.filter(s=>s.st===fK_status);
+  if(fK_q){const q=fK_q.toLowerCase();f=f.filter(s=>s.ns.toLowerCase().includes(q)||s.tujuan.toLowerCase().includes(q)||s.ph.toLowerCase().includes(q))}
+  const tb = document.getElementById('tbK');
+  tb.innerHTML = f.length? f.map(s=>`
+    <tr onclick="detailKeluar(${s.id})">
+      <td style="font-weight:600;color:var(--accent)">${s.na}</td>
+      <td>${s.ns}</td>
+      <td style="white-space:nowrap">${fmtDateShort(s.tgl)}</td>
+      <td>${s.tujuan}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.ph}</td>
+      <td><span style="background:var(--card2);padding:3px 8px;border-radius:4px;font-size:11px">${s.kat}</span></td>
+      <td><span class="bg b-${s.st}">${statusLabel(s.st)}</span></td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="bs sm" onclick="detailKeluar(${s.id})" title="Detail"><i class="fas fa-eye"></i></button>
+        <button class="bs sm" onclick="cetakSurat('keluar',${s.id})" title="Cetak"><i class="fas fa-print"></i></button>
+        <button class="bd sm" onclick="hapusKeluar(${s.id})" title="Hapus"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="8"><div class="es"><i class="fas fa-paper-plane"></i><p>Tidak ada surat keluar</p></div></td></tr>`;
+}
+
+function detailKeluar(id){
+  const s = state.suratKeluar.find(x=>x.id===id); if(!s) return;
+  document.getElementById('M1C').innerHTML = `
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+        <div>
+          <span class="bg b-keluar">Surat Keluar</span>
+          <h2 style="font-size:19px;font-weight:700;margin-top:8px" class="fp">${s.ph}</h2>
+        </div>
+        <button onclick="closeM('M1')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="grid2" style="margin-bottom:18px">
+        ${meta('No. Agenda',s.na)}${meta('No. Surat',s.ns)}
+        ${meta('Tanggal',fmtDate(s.tgl))}${meta('Tujuan',s.tujuan)}
+        ${meta('Kategori',s.kat)}${meta('Status','<span class="bg b-'+s.st+'">'+statusLabel(s.st)+'</span>')}
+      </div>
+      ${meta('Isi Surat')}
+      <div style="background:var(--bg);padding:14px;border-radius:8px;line-height:1.7;white-space:pre-wrap;margin-bottom:16px">${s.isi}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="bs" onclick="cetakSurat('keluar',${s.id})"><i class="fas fa-print"></i> Cetak</button>
+      </div>
+    </div>`;
+  openM('M1');
+}
+
+function formTambahKeluar(){
+  document.getElementById('M2C').innerHTML = `
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+        <h2 style="font-size:19px;font-weight:700" class="fp">Tambah Surat Keluar</h2>
+        <button onclick="closeM('M2')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <form onsubmit="submitKeluar(event)">
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">No. Surat</label><input type="text" class="fi" name="ns" required value="${genNoSurat()}"></div>
+          <div><label class="fl">Tanggal</label><input type="date" class="fi" name="tgl" required value="${new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div style="margin-bottom:14px"><label class="fl">Tujuan</label><input type="text" class="fi" name="tujuan" required placeholder="Instansi/lembaga tujuan"></div>
+        <div style="margin-bottom:14px"><label class="fl">Perihal</label><input type="text" class="fi" name="ph" required placeholder="Subjek surat"></div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Kategori</label><select class="fi" name="kat">${['Penetapan','Keuangan','Laporan','Izin','Undangan','Hukum','Lainnya'].map(k=>`<option>${k}</option>`).join('')}</select></div>
+          <div><label class="fl">Status</label><select class="fi" name="st"><option value="proses">Proses</option><option value="selesai">Selesai</option></select></div>
+        </div>
+        <div style="margin-bottom:18px"><label class="fl">Isi Surat</label><textarea class="fi" name="isi" required rows="6" placeholder="Ketik isi surat..."></textarea></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="bs" onclick="closeM('M2')">Batal</button>
+          <button type="submit" class="bp"><i class="fas fa-paper-plane"></i> Simpan &amp; Kirim</button>
+        </div>
+      </form>
+    </div>`;
+  openM('M2');
+}
+
+function submitKeluar(e){
+  e.preventDefault();
+  const f = e.target;
+  state.suratKeluar.unshift({id:nextIdKeluar(),na:genNoAgenda('keluar'),ns:f.ns.value,tgl:f.tgl.value,tujuan:f.tujuan.value,ph:f.ph.value,isi:f.isi.value,kat:f.kat.value,st:f.st.value});
+  save(); closeM('M2'); renderSuratKeluar(); toast('Surat keluar berhasil ditambahkan');
+}
+
+function hapusKeluar(id){
+  if(!confirm('Hapus surat keluar ini?')) return;
+  state.suratKeluar = state.suratKeluar.filter(s=>s.id!==id);
+  save(); renderSuratKeluar(); toast('Surat keluar dihapus','err');
+}
+
+/* ===================== BUAT SURAT (TEMPLATE) ===================== */
+function renderBuatSurat(){
+  const c = document.getElementById('p-buat-surat');
+  c.innerHTML = `
+    <div style="margin-bottom:22px"><p style="color:var(--muted);font-size:12pt">Pilih template surat. Surat biasa akan tersimpan di Surat Keluar. Untuk Surat Tugas, klik kartu di bawah untuk membuat atau mengedit.</p></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px">
+      ${templateCard('undangan','fa-calendar-check','Surat Undangan','Template undangan rapat/kegiatan','rgba(62,168,224,.12)','#6fb8e8')}
+      ${templateCard('pemberitahuan','fa-bullhorn','Surat Pemberitahuan','Template pemberitahuan resmi','rgba(0,212,170,.12)','var(--accent)')}
+      ${templateCard('permohonan','fa-hand-paper','Surat Permohonan','Template permohonan resmi','rgba(255,176,32,.12)','var(--warn)')}
+      ${templateCard('izin','fa-file-signature','Surat Izin','Template izin kegiatan','rgba(48,214,112,.12)','var(--ok)')}
+      <div class="crd" style="cursor:pointer;text-align:center;padding:24px" onclick="formTugas()">
+        <div style="width:52px;height:52px;border-radius:12px;background:rgba(155,124,255,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><i class="fas fa-file-signature" style="font-size:22px;color:var(--purple)"></i></div>
+        <div style="font-weight:700;font-size:12pt">Surat Tugas</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Buat & edit Surat Tugas (SPT)</div>
+      </div>
+    </div>
+    <div id="tmplForm"></div>
+    <div style="margin-top:28px">
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:12px" class="fp">Daftar Surat Tugas</h3>
+      <div id="listTugasBuat"></div>
+    </div>`;
+  renderListTugasBuat();
+}
+
+function templateCard(type,icon,title,desc,bg,color){
+  return `<div class="crd" style="cursor:pointer;text-align:center;padding:24px" onclick="buatDariTemplate('${type}')">
+    <div style="width:52px;height:52px;border-radius:12px;background:${bg};display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><i class="fas ${icon}" style="font-size:22px;color:${color}"></i></div>
+    <div style="font-weight:700;font-size:12pt">${title}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px">${desc}</div>
+  </div>`;
+}
+
+const TEMPLATES = {
+  undangan:{kat:'Undangan',ph:'Undangan Rapat Koordinasi',isi:'Dengan hormat,\n\nBersama ini kami mengundang Bapak/Ibu untuk hadir dalam Rapat Koordinasi yang akan diselenggarakan pada:\n\nHari/Tanggal : \nWaktu        : \nTempat       : \nAgenda       : \n\nDemikian undangan ini kami sampaikan, atas kehadiran Bapak/Ibu kami ucapkan terima kasih.'},
+  pemberitahuan:{kat:'Pemberitahuan',ph:'Pemberitahuan Pelaksanaan Kegiatan',isi:'Dengan hormat,\n\nBersama ini kami sampaikan pemberitahuan bahwa akan dilaksanakan kegiatan sebagai berikut:\n\nNama Kegiatan : \nTanggal       : \nTempat        : \nPeserta       : \n\nDemikian pemberitahuan ini kami sampaikan untuk dapat ditindaklanjuti sebagaimana mestinya.'},
+  permohonan:{kat:'Permohonan',ph:'Permohonan [sebutkan keperluan]',isi:'Dengan hormat,\n\nBersama ini kami ajukan permohonan [sebutkan keperluan] dengan rincian sebagai berikut:\n\nKeperluan   : \nJumlah      : \nKeterangan  : \n\nDemikian permohonan ini kami ajukan, atas perhatian dan persetujuan Bapak/Ibu kami ucapkan terima kasih.'},
+  izin:{kat:'Izin',ph:'Surat Izin [sebutkan kegiatan]',isi:'Dengan hormat,\n\nDiberikan izin kepada [nama] untuk melaksanakan [kegiatan] pada:\n\nHari/Tanggal : \nWaktu        : \nTempat       : \n\nIzin diberikan dengan ketentuan pelaksanaan kegiatan sesuai dengan ketentuan yang berlaku.'}
+};
+
+function buatDariTemplate(type){
+  const t = TEMPLATES[type];
+  document.getElementById('tmplForm').innerHTML = `
+    <div class="crd fu">
+      <h3 style="font-size:17px;font-weight:700;margin-bottom:18px" class="fp">Buat ${t.kat}</h3>
+      <form onsubmit="submitTemplate(event,'${type}')">
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Tujuan</label><input type="text" class="fi" name="tujuan" required placeholder="Instansi/orang tujuan"></div>
+          <div><label class="fl">Tanggal</label><input type="date" class="fi" name="tgl" required value="${new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div style="margin-bottom:14px"><label class="fl">Perihal</label><input type="text" class="fi" name="ph" required value="${t.ph}"></div>
+        <div style="margin-bottom:18px"><label class="fl">Isi Surat</label><textarea class="fi" name="isi" required rows="12">${t.isi}</textarea></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="bs" onclick="document.getElementById('tmplForm').innerHTML=''">Batal</button>
+          <button type="submit" class="bp"><i class="fas fa-paper-plane"></i> Simpan &amp; Kirim</button>
+        </div>
+      </form>
+    </div>`;
+  document.getElementById('tmplForm').scrollIntoView({behavior:'smooth'});
+}
+
+
+function renderListTugasBuat(){
+  const el = document.getElementById('listTugasBuat');
+  if(!el) return;
+  const list = state.suratTugas || [];
+  if(!list.length){
+    el.innerHTML = '<div class="es" style="padding:30px"><i class="fas fa-file-signature"></i><p>Belum ada surat tugas</p></div>';
+    return;
+  }
+  el.innerHTML = `<div class="crd" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="dt">
+    <thead><tr><th>No. Agenda</th><th>Nomor</th><th>Tanggal</th><th>Pegawai</th><th>Tujuan</th><th>Aksi</th></tr></thead>
+    <tbody>${list.map(s=>`
+      <tr>
+        <td style="font-weight:600;color:var(--purple)">${s.na}</td>
+        <td>${s.ns}</td>
+        <td style="white-space:nowrap">${fmtDateShort(s.tgl)}</td>
+        <td style="font-size:12px">${s.pegawai.map(p=>p.nama).join('<br>')}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.tujuan}</td>
+        <td style="white-space:nowrap">
+          <button class="bs sm" onclick="formTugas(${s.id})" title="Edit"><i class="fas fa-edit"></i></button>
+          <button class="bw sm" onclick="cetakTugas(${s.id})" title="Cetak"><i class="fas fa-print"></i></button>
+        </td>
+      </tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+
+function submitTemplate(e,type){
+  e.preventDefault();
+  const f = e.target, t = TEMPLATES[type];
+  state.suratKeluar.unshift({id:nextIdKeluar(),na:genNoAgenda('keluar'),ns:genNoSurat(),tgl:f.tgl.value,tujuan:f.tujuan.value,ph:f.ph.value,isi:f.isi.value,kat:t.kat,st:'proses'});
+  save(); document.getElementById('tmplForm').innerHTML='';
+  toast(`Surat ${t.kat} berhasil dibuat`);
+}
+
+/* ===================== SURAT TUGAS ===================== */
+let fT_q='';
+function genNoTugas(){
+  const now=new Date();
+  const urut=String(state.suratTugas.length+1).padStart(3,'0');
+  const romawi=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+  return `ST.${urut}/${ORG.kode}/${romawi[now.getMonth()]}/${now.getFullYear()}`;
+}
+function genNoAgendaTugas(){
+  return 'ST-'+String(Math.max(0,...state.suratTugas.map(s=>parseInt(s.na.split('-')[1])||0))+1).padStart(3,'0');
+}
+function nextIdTugas(){return Math.max(0,...state.suratTugas.map(s=>s.id))+1}
+
+function renderSuratTugas(){
+  const c=document.getElementById('p-surat-tugas');
+  let f=[...state.suratTugas];
+  if(fT_q){const q=fT_q.toLowerCase();f=f.filter(s=>s.ns.toLowerCase().includes(q)||s.tujuan.toLowerCase().includes(q)||s.pegawai.some(p=>p.nama.toLowerCase().includes(q)))}
+  c.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+      <button class="bp" onclick="formTugas()"><i class="fas fa-plus"></i> Buat Surat Tugas</button>
+      <div style="position:relative">
+        <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+        <input type="text" class="fi" placeholder="Cari surat tugas..." style="width:240px;padding-left:32px" value="${fT_q}" oninput="fT_q=this.value;renderSuratTugas()">
+      </div>
+    </div>
+    <div class="crd" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>No. Agenda</th><th>Nomor Surat</th><th>Tanggal</th><th>Pegawai Ditugaskan</th><th>Tujuan Tugas</th><th>Pelaksanaan</th><th>Aksi</th></tr></thead>
+          <tbody id="tbT"></tbody>
+        </table>
+      </div>
+    </div>`;
+  const tb=document.getElementById('tbT');
+  tb.innerHTML=f.length?f.map(s=>`
+    <tr onclick="detailTugas(${s.id})">
+      <td style="font-weight:600;color:var(--purple)">${s.na}</td>
+      <td>${s.ns}</td>
+      <td style="white-space:nowrap">${fmtDateShort(s.tgl)}</td>
+      <td style="max-width:220px"><div style="font-size:12px">${s.pegawai.map(p=>p.nama).join('<br>')}</div></td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.tujuan}</td>
+      <td style="font-size:12px;white-space:nowrap">${s.hariTanggal}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="bs sm" onclick="detailTugas(${s.id})" title="Detail"><i class="fas fa-eye"></i></button>
+        <button class="bw sm" onclick="formTugas(${s.id})" title="Edit"><i class="fas fa-edit"></i></button>
+        <button class="bd sm" onclick="cetakTugas(${s.id})" title="Cetak"><i class="fas fa-print"></i></button>
+        <button class="bd sm" onclick="hapusTugas(${s.id})" title="Hapus"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join(''):`<tr><td colspan="8"><div class="es"><i class="fas fa-file-signature"></i><p>Belum ada surat tugas</p></div></td></tr>`;
+}
+
+function detailTugas(id){
+  const s=state.suratTugas.find(x=>x.id===id);if(!s)return;
+  document.getElementById('M1C').innerHTML=`
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+        <div>
+          <span class="bg" style="background:rgba(155,124,255,.13);color:var(--purple)">Surat Tugas</span>
+          <h2 style="font-size:19px;font-weight:700;margin-top:8px" class="fp">${s.ns}</h2>
+        </div>
+        <button onclick="closeM('M1')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="grid2" style="margin-bottom:14px">
+        ${meta('No. Agenda',s.na)}${meta('Tanggal Surat',fmtDate(s.tgl))}
+        ${meta('Kota',s.kota)}${meta('Pelaksanaan',s.hariTanggal)}
+        ${meta('Waktu',s.waktu)}${meta('Tempat',s.tempat)}
+      </div>
+      ${meta('Dasar Penugasan')}
+      <div style="background:var(--bg);padding:14px;border-radius:8px;margin-bottom:14px">
+        ${s.dasar.map((d,i)=>`<div style="margin-bottom:4px">${i+1}. ${d}</div>`).join('')}
+      </div>
+      ${meta('Pegawai yang Ditugaskan')}
+      <div style="background:var(--bg);padding:14px;border-radius:8px;margin-bottom:14px">
+        <table style="width:100%;font-size:12pt">
+          <thead><tr style="color:var(--muted)"><th style="text-align:left;padding:4px 8px">No</th><th style="text-align:left;padding:4px 8px">Nama</th><th style="text-align:left;padding:4px 8px">NIP</th><th style="text-align:left;padding:4px 8px">Jabatan</th></tr></thead>
+          <tbody>${s.pegawai.map((p,i)=>`<tr><td style="padding:4px 8px">${i+1}</td><td style="padding:4px 8px;font-weight:600">${p.nama}</td><td style="padding:4px 8px;font-family:monospace;font-size:12px">${p.nip}</td><td style="padding:4px 8px">${p.jabatan}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+      ${meta('Tujuan Tugas')}
+      <div style="background:var(--bg);padding:14px;border-radius:8px;line-height:1.7;white-space:pre-wrap;margin-bottom:16px">${s.tujuan}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="bw" onclick="cetakTugas(${s.id})"><i class="fas fa-print"></i> Cetak Surat Tugas</button>
+      </div>
+    </div>`;
+  openM('M1');
+}
+
+function formTugas(id){
+  const s=id?state.suratTugas.find(x=>x.id===id):null;
+  const pegList=state.pegawai;
+  const selectedIds=s?s.pegawai.map(p=>p.id):[];
+  document.getElementById('M2C').innerHTML=`
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+        <h2 style="font-size:19px;font-weight:700" class="fp">${s?'Edit Surat Tugas':'Buat Surat Tugas'}</h2>
+        <button onclick="closeM('M2')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <form onsubmit="submitTugas(event,${id||'null'})">
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Nomor Surat</label><input type="text" class="fi" name="ns" required value="${s?s.ns:genNoTugas()}"></div>
+          <div><label class="fl">Tanggal Surat</label><input type="date" class="fi" name="tgl" required value="${s?s.tgl:new Date().toISOString().split('T')[0]}"></div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Kota</label><input type="text" class="fi" name="kota" required value="${s?s.kota:'Malang'}"></div>
+          <div><label class="fl">Hari / Tanggal Pelaksanaan</label><input type="text" class="fi" name="hariTanggal" required value="${s?s.hariTanggal:''}" placeholder="Contoh: Rabu, 11 Desember 2024"></div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Waktu</label><input type="text" class="fi" name="waktu" required value="${s?s.waktu:''}" placeholder="08.00 - 16.00 WIB"></div>
+          <div><label class="fl">Tempat</label><input type="text" class="fi" name="tempat" required value="${s?s.tempat:''}" placeholder="Lokasi pelaksanaan"></div>
+        </div>
+        <div style="margin-bottom:14px"><label class="fl">Dasar Penugasan (satu baris per poin)</label><textarea class="fi" name="dasar" required rows="4" placeholder="Peraturan Kepala Daerah tentang tugas dan fungsi UPT${'\n'}Surat Keputusan ...">${s?s.dasar.join('\n'):''}</textarea></div>
+        <div style="margin-bottom:14px">
+          <label class="fl">Pegawai yang Ditugaskan (centang satu atau lebih)</label>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px;max-height:200px;overflow-y:auto">
+            ${pegList.map(p=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 6px;cursor:pointer;font-size:12pt;border-radius:4px" onmouseover="this.style.background='rgba(0,212,170,.05)'" onmouseout="this.style.background=''">
+              <input type="checkbox" name="peg" value="${p.id}" ${selectedIds.includes(p.id)?'checked':''} style="accent-color:var(--accent)">
+              <span class="avatar" style="width:26px;height:26px;font-size:10px;background:linear-gradient(135deg,${avatarColor(p.nama)},${avatarColor(p.nama+'x')})">${initials(p.nama)}</span>
+              <span style="flex:1"><strong>${p.nama}</strong> <span style="color:var(--muted);font-size:11px">— ${p.jabatan}</span></span>
+            </label>`).join('')}
+          </div>
+        </div>
+        <div style="margin-bottom:18px"><label class="fl">Tujuan Tugas</label><textarea class="fi" name="tujuan" required rows="4" placeholder="Uraian tugas yang akan dilaksanakan...">${s?s.tujuan:''}</textarea></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="bs" onclick="closeM('M2')">Batal</button>
+          <button type="button" class="bw" onclick="previewFromForm(this.form)"><i class="fas fa-eye"></i> Preview</button>
+          <button type="button" class="bp" onclick="printFromForm(this.form)" style="background:var(--purple)"><i class="fas fa-print"></i> Print</button>
+          <button type="submit" class="bp"><i class="fas fa-save"></i> Simpan</button>
+        </div>
+      </form>
+    </div>`;
+  openM('M2');
+}
+
+function submitTugas(e,id){
+  e.preventDefault();
+  const f=e.target;
+  const dasarArr=f.dasar.value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const pegIds=[...f.querySelectorAll('input[name="peg"]:checked')].map(i=>parseInt(i.value));
+  if(pegIds.length===0){toast('Pilih minimal satu pegawai','err');return}
+  const pegSnap=pegIds.map(pid=>{
+    const p=state.pegawai.find(x=>x.id===pid);
+    return {id:p.id,nama:p.nama,nip:p.nip,gol:p.gol||"-",jabatan:p.jabatan};
+  });
+  const data={ns:f.ns.value,tgl:f.tgl.value,kota:f.kota.value,dasar:dasarArr,pegawai:pegSnap,hariTanggal:f.hariTanggal.value,waktu:f.waktu.value,tempat:f.tempat.value,tujuan:f.tujuan.value};
+  if(id){
+    const s=state.suratTugas.find(x=>x.id===id);
+    Object.assign(s,data);
+    toast('Surat tugas diperbarui');
+  }else{
+    data.id=nextIdTugas();
+    data.na=genNoAgendaTugas();
+    state.suratTugas.unshift(data);
+    toast('Surat tugas berhasil dibuat');
+  }
+  save();closeM('M2');if(typeof renderListTugasBuat==='function') renderListTugasBuat();if(typeof renderSuratTugas==='function' && document.getElementById('p-surat-tugas') && document.getElementById('p-surat-tugas').style.display!=='none') renderSuratTugas();toast('Surat tugas berhasil disimpan');
+}
+
+
+function previewFromForm(form){
+  const f = form;
+  const dasarArr = f.dasar.value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const pegIds = [...f.querySelectorAll('input[name="peg"]:checked')].map(i=>parseInt(i.value));
+  if(pegIds.length===0){toast('Pilih minimal satu pegawai untuk preview','err');return}
+  const pegSnap = pegIds.map(pid=>{
+    const p = state.pegawai.find(x=>x.id===pid);
+    return {id:p.id,nama:p.nama,nip:p.nip,gol:p.gol||"-",jabatan:p.jabatan};
+  });
+  const temp = {
+    id:0, na:'PREVIEW', ns:f.ns.value, tgl:f.tgl.value, kota:f.kota.value,
+    dasar:dasarArr, pegawai:pegSnap, hariTanggal:f.hariTanggal.value,
+    waktu:f.waktu.value, tempat:f.tempat.value, tujuan:f.tujuan.value
+  };
+  // temporarily inject and call cetak
+  const orig = state.suratTugas.find(x=>x.id===0);
+  state.suratTugas.unshift(temp);
+  cetakTugas(0);
+  state.suratTugas = state.suratTugas.filter(x=>x.id!==0);
+}
+
+
+function printFromForm(form){
+  previewFromForm(form);
+  setTimeout(()=>{
+    const printBtn = document.querySelector('#M3C button[onclick*="window.print"]');
+    if(printBtn) printBtn.click();
+    else window.print();
+  }, 400);
+}
+
+function hapusTugas(id){
+  if(!confirm('Hapus surat tugas ini?'))return;
+  state.suratTugas=state.suratTugas.filter(s=>s.id!==id);
+  save();renderSuratTugas();toast('Surat tugas dihapus','err');
+}
+
+function cetakTugas(id){
+  const s=state.suratTugas.find(x=>x.id===id);if(!s)return;
+  const pegListHtml = s.pegawai.map((p,i)=>`
+    <tr>
+      <td style="border:1px solid #111;padding:6px;text-align:center">${i+1}</td>
+      <td style="border:1px solid #111;padding:6px">${p.nama}</td>
+      <td style="border:1px solid #111;padding:6px;font-family:monospace">${p.nip}</td>
+      <td style="border:1px solid #111;padding:6px">${p.gol||'-'}</td>
+      <td style="border:1px solid #111;padding:6px">${p.jabatan}</td>
+    </tr>`).join('');
+
+  document.getElementById('M3C').innerHTML=`
+    <div style="padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 style="font-size:16px;font-weight:700" class="fp">Preview Cetak Surat Tugas</h3>
+        <div style="display:flex;gap:8px">
+          <button class="bp" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+          <button class="bs" onclick="closeM('M3')">Tutup</button>
+        </div>
+      </div>
+      <div id="printArea" style="font-family:Arial,sans-serif;font-size:12pt;line-height:1.5;color:#111">
+        ${kopSurat()}
+        <div style="text-align:center;margin:24px 0 16px">
+          <div style="font-size:14pt;font-weight:bold;text-decoration:underline;letter-spacing:1px;font-family:Arial,sans-serif">SURAT TUGAS</div>
+          <div style="font-size:12pt;margin-top:4px">Nomor: ${s.ns}</div>
+        </div>
+        <div style="margin:16px 0">
+          <table style="width:100%;font-size:12pt;border-collapse:collapse">
+            <tr>
+              <td style="width:80px;vertical-align:top;font-weight:bold">Dasar</td>
+              <td style="width:20px;vertical-align:top">:</td>
+              <td>
+                ${s.dasar.map((d,i)=>`<div style="margin-bottom:2px">${i+1}. ${d}</div>`).join('')}
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div style="text-align:center;font-weight:bold;margin:18px 0;letter-spacing:1px">MEMERINTAHKAN:</div>
+        <div style="margin:12px 0">
+          <table style="width:100%;font-size:12pt">
+            <tr>
+              <td style="width:80px;vertical-align:top;font-weight:bold">Kepada</td>
+              <td style="width:20px;vertical-align:top">:</td>
+              <td>Daftar Nama Terlampir</td>
+            </tr>
+          </table>
+        </div>
+        <div style="margin:12px 0">
+          <table style="width:100%;font-size:12pt">
+            <tr>
+              <td style="width:80px;vertical-align:top;font-weight:bold">Untuk</td>
+              <td style="width:20px;vertical-align:top">:</td>
+              <td style="text-align:justify">${s.tujuan}</td>
+            </tr>
+          </table>
+        </div>
+        <div style="margin:16px 0 8px;font-size:12pt">
+          <table style="width:100%">
+            <tr><td style="width:140px">Hari / Tanggal</td><td>: ${s.hariTanggal}</td></tr>
+            <tr><td>Waktu</td><td>: ${s.waktu}</td></tr>
+            <tr><td>Tempat</td><td>: ${s.tempat}</td></tr>
+          </table>
+        </div>
+        <div style="margin:16px 0">Demikian surat tugas ini dibuat untuk dilaksanakan dengan penuh tanggung jawab.</div>
+        <div style="display:flex;justify-content:flex-end;margin-top:40px">
+          <div style="text-align:center;width:260px">
+            <div>${s.kota}, ${fmtDate(s.tgl)}</div>
+            <div>${ORG.jabatanKepala}</div>
+            <div style="height:80px"></div>
+            <div style="font-weight:bold;text-decoration:underline">${ORG.kepala}</div>
+            <div style="font-size:12px">NIP. ${ORG.nipKepala}</div>
+          </div>
+        </div>
+
+        <div style="page-break-before:always;margin-top:40px;padding-top:20px">
+          <div style="text-align:center;font-weight:bold;margin-bottom:6px">LAMPIRAN</div>
+          <div style="text-align:center;margin-bottom:16px">Surat Tugas Nomor ${s.ns}<br>Tanggal ${fmtDate(s.tgl)}</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12pt;margin:10px 0">
+            <thead>
+              <tr style="background:#f0f0f0">
+                <th style="border:1px solid #111;padding:6px;text-align:center;width:40px">No</th>
+                <th style="border:1px solid #111;padding:6px;text-align:left">Nama</th>
+                <th style="border:1px solid #111;padding:6px;text-align:left;width:160px">NIP</th>
+                <th style="border:1px solid #111;padding:6px;text-align:left;width:100px">Pangkat/Gol.</th>
+                <th style="border:1px solid #111;padding:6px;text-align:left">Jabatan</th>
+              </tr>
+            </thead>
+            <tbody>${pegListHtml}</tbody>
+          </table>
+          <div style="display:flex;justify-content:flex-end;margin-top:40px">
+            <div style="text-align:center;width:260px">
+              <div>${s.kota}, ${fmtDate(s.tgl)}</div>
+              <div>${ORG.jabatanKepala}</div>
+              <div style="height:80px"></div>
+              <div style="font-weight:bold;text-decoration:underline">${ORG.kepala}</div>
+              <div style="font-size:12px">NIP. ${ORG.nipKepala}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  openM('M3');
+}
+
+/* ===================== DISPOSISI ===================== */
+function renderDisposisi(){
+  const needD = state.suratMasuk.filter(s=>s.st==='proses');
+  const haveD = state.suratMasuk.filter(s=>s.disp&&s.disp.length>0);
+  document.getElementById('p-disposisi').innerHTML = `
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px">
+      <button class="tb on" id="tbPend" onclick="dispTab('pending')">Perlu Disposisi (${needD.length})</button>
+      <button class="tb" id="tbDone" onclick="dispTab('done')">Sudah Disposisi (${haveD.length})</button>
+    </div>
+    <div id="dispC"></div>`;
+  renderDispPending();
+}
+function dispTab(t){
+  document.getElementById('tbPend').classList.toggle('on',t==='pending');
+  document.getElementById('tbDone').classList.toggle('on',t==='done');
+  if(t==='pending') renderDispPending(); else renderDispDone();
+}
+function renderDispPending(){
+  const list = state.suratMasuk.filter(s=>s.st==='proses');
+  const el = document.getElementById('dispC');
+  el.innerHTML = list.length? `<div class="crd" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="dt">
+    <thead><tr><th>No. Agenda</th><th>No. Surat</th><th>Pengirim</th><th>Perihal</th><th>Tanggal</th><th>Aksi</th></tr></thead>
+    <tbody>${list.map(s=>`<tr>
+      <td style="font-weight:600;color:var(--accent)">${s.na}</td><td>${s.ns}</td><td>${s.dari}</td><td>${s.ph}</td><td style="white-space:nowrap">${fmtDateShort(s.tgl)}</td>
+      <td><button class="bp sm" onclick="formDisposisi(${s.id})"><i class="fas fa-share"></i> Disposisi</button></td>
+    </tr>`).join('')}</tbody></table></div></div>` : '<div class="es"><i class="fas fa-check-circle"></i><p>Semua surat sudah didisposisi</p></div>';
+}
+function renderDispDone(){
+  const list = state.suratMasuk.filter(s=>s.disp&&s.disp.length>0);
+  const el = document.getElementById('dispC');
+  el.innerHTML = list.length? list.map(s=>`
+    <div class="crd" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div><div style="font-weight:700">${s.ph}</div><div style="font-size:12pt;color:var(--muted)">${s.na} — ${s.dari}</div></div>
+        <span class="bg b-${s.st}">${statusLabel(s.st)}</span>
+      </div>
+      ${s.disp.map(d=>`<div class="di"><div class="dd"><i class="fas fa-share"></i></div>
+        <div><div style="font-weight:600;color:var(--accent)">${d.tujuan}</div><div style="font-size:12pt">${d.cat}</div><div style="font-size:12px;color:var(--muted)">${fmtDateShort(d.tgl)}</div></div></div>`).join('')}
+    </div>`).join('') : '<div class="es"><i class="fas fa-inbox"></i><p>Belum ada disposisi</p></div>';
+}
+
+function formDisposisi(id){
+  const s = state.suratMasuk.find(x=>x.id===id); if(!s) return;
+  document.getElementById('M4C').innerHTML = `
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <h3 style="font-size:17px;font-weight:700" class="fp">Disposisi Surat</h3>
+        <button onclick="closeM('M4')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <div style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:16px;font-size:12pt;color:var(--muted)">
+        <strong style="color:var(--fg)">${s.ph}</strong><br>${s.ns} — ${s.dari}
+      </div>
+      <form onsubmit="submitDisposisi(event,${id})">
+        <div style="margin-bottom:14px">
+          <label class="fl">Tujuan Disposisi</label>
+          <select class="fi" name="tujuan" required>
+            <option value="">Pilih tujuan...</option>
+            ${['Kepala Dinas','Sekretaris','Kabag TU','Bendahara','Seksi Dikdas','Seksi Dikmen','Seksi PAUD'].map(o=>`<option>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div style="margin-bottom:14px"><label class="fl">Catatan Disposisi</label><textarea class="fi" name="cat" required rows="3" placeholder="Instruksi/catatan disposisi..."></textarea></div>
+        <div style="margin-bottom:18px"><label class="fl">Ubah Status</label><select class="fi" name="st">
+          ${['proses','selesai','tertunda'].map(o=>`<option value="${o}" ${s.st===o?'selected':''}>${statusLabel(o)}</option>`).join('')}
+        </select></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="bs" onclick="closeM('M4')">Batal</button>
+          <button type="submit" class="bp"><i class="fas fa-share"></i> Kirim Disposisi</button>
+        </div>
+      </form>
+    </div>`;
+  openM('M4');
+}
+
+function submitDisposisi(e,id){
+  e.preventDefault();
+  const f = e.target;
+  const s = state.suratMasuk.find(x=>x.id===id); if(!s) return;
+  s.disp.push({tujuan:f.tujuan.value,cat:f.cat.value,tgl:new Date().toISOString().split('T')[0]});
+  s.st = f.st.value;
+  save(); closeM('M4'); toast('Disposisi berhasil dikirim');
+  if(currentPage==='disposisi') renderDisposisi();
+  else if(currentPage==='surat-masuk') renderSuratMasuk();
+  else if(currentPage==='dashboard') renderDashboard();
+}
+
+/* ===================== DATA PEGAWAI ===================== */
+let fP_q='', fP_div='semua';
+function renderPegawai(){
+  const divisiList = [...new Set(state.pegawai.map(p=>p.divisi))];
+  document.getElementById('p-pegawai').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px">
+      ${statCard('Total Pegawai',state.pegawai.length,'fa-users','var(--purple)','Terdaftar','pegawai')}
+      ${statCard('Pimpinan',state.pegawai.filter(p=>p.jabatan.includes('Kepala')||p.jabatan==='Sekretaris').length,'fa-user-tie','var(--accent)','Jabatan struktural','pegawai')}
+      ${statCard('Staf',state.pegawai.filter(p=>p.jabatan.includes('Staf')).length,'fa-user','var(--info)','Pelaksana','pegawai')}
+      ${statCard('Divisi',divisiList.length,'fa-sitemap','var(--warn)','Unit kerja','pegawai')}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+      <button class="bp" onclick="formTambahPegawai()"><i class="fas fa-user-plus"></i> Tambah Pegawai</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="fi" style="width:160px" onchange="fP_div=this.value;renderPegawai()">
+          <option value="semua" ${fP_div==='semua'?'selected':''}>Semua Divisi</option>
+          ${divisiList.map(d=>`<option ${fP_div===d?'selected':''}>${d}</option>`).join('')}
+        </select>
+        <div style="position:relative">
+          <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+          <input type="text" class="fi" placeholder="Cari pegawai..." style="width:200px;padding-left:32px" value="${fP_q}" oninput="fP_q=this.value;renderPegawai()">
+        </div>
+      </div>
+    </div>
+    <div class="crd" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table class="dt">
+          <thead><tr><th>Nama</th><th>NIP</th><th>Jabatan</th><th>Divisi</th><th>Pendidikan</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="tbP"></tbody>
+        </table>
+      </div>
+    </div>`;
+  let f = [...state.pegawai];
+  if(fP_div!=='semua') f=f.filter(p=>p.divisi===fP_div);
+  if(fP_q){const q=fP_q.toLowerCase();f=f.filter(p=>p.nama.toLowerCase().includes(q)||p.nip.includes(q)||p.jabatan.toLowerCase().includes(q))}
+  document.getElementById('tbP').innerHTML = f.length? f.map(p=>`
+    <tr onclick="detailPegawai(${p.id})">
+      <td><div style="display:flex;align-items:center;gap:10px">
+        <div class="avatar" style="background:linear-gradient(135deg,${avatarColor(p.nama)},${avatarColor(p.nama+'x')})">${initials(p.nama)}</div>
+        <div><div style="font-weight:600">${p.nama}</div><div style="font-size:11px;color:var(--muted)">${p.jekel==='L'?'Laki-laki':'Perempuan'}</div></div>
+      </div></td>
+      <td style="font-family:monospace;font-size:12px">${p.nip}</td>
+      <td>${p.jabatan}</td>
+      <td>${p.divisi}</td>
+      <td><span style="background:var(--card2);padding:3px 8px;border-radius:4px;font-size:11px">${p.pendidikan||'-'}</span></td>
+      <td><span class="bg ${p.statusPeg==='PNS'?'b-selesai':p.statusPeg==='PPPK'?'b-proses':'b-masuk'}">${p.statusPeg||'-'}</span></td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="bs sm" onclick="detailPegawai(${p.id})" title="Detail"><i class="fas fa-eye"></i></button>
+        <button class="bs sm" onclick="formEditPegawai(${p.id})" title="Edit"><i class="fas fa-edit"></i></button>
+        <button class="bd sm" onclick="hapusPegawai(${p.id})" title="Hapus"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="7"><div class="es"><i class="fas fa-users"></i><p>Tidak ada pegawai</p></div></td></tr>`;
+}
+
+function detailPegawai(id){
+  const p = state.pegawai.find(x=>x.id===id); if(!p) return;
+  document.getElementById('M1C').innerHTML = `
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="avatar" style="width:60px;height:60px;font-size:22px;background:linear-gradient(135deg,${avatarColor(p.nama)},${avatarColor(p.nama+'x')})">${initials(p.nama)}</div>
+          <div>
+            <h2 style="font-size:19px;font-weight:700" class="fp">${p.nama}</h2>
+            <div style="color:var(--accent);font-size:12pt;margin-top:2px">${p.jabatan} • ${p.divisi}</div>
+          </div>
+        </div>
+        <button onclick="closeM('M1')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="grid2" style="margin-bottom:16px">
+        ${meta('NIP',p.nip)}${meta('Jenis Kelamin',p.jekel==='L'?'Laki-laki':'Perempuan')}
+        ${meta('Golongan',p.gol)}${meta('Divisi',p.divisi)}
+        ${meta('Tanggal Masuk',fmtDate(p.tglMasuk))}${meta('Jabatan',p.jabatan)}
+        ${meta('Pendidikan',p.pendidikan||'-')}${meta('Status Kepegawaian',p.statusPeg||'-')}
+      </div>
+      <div class="grid2">
+        ${meta('Telepon',p.telp)}${meta('Email',p.email)}
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+        <button class="bs" onclick="closeM('M1');formEditPegawai(${p.id})"><i class="fas fa-edit"></i> Edit</button>
+      </div>
+    </div>`;
+  openM('M1');
+}
+
+function formTambahPegawai(){formPegawai(null)}
+function formEditPegawai(id){formPegawai(id)}
+function formPegawai(id){
+  const p = id? state.pegawai.find(x=>x.id===id) : null;
+  document.getElementById('M2C').innerHTML = `
+    <div style="padding:26px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+        <h2 style="font-size:19px;font-weight:700" class="fp">${p?'Edit Pegawai':'Tambah Pegawai'}</h2>
+        <button onclick="closeM('M2')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px"><i class="fas fa-times"></i></button>
+      </div>
+      <form onsubmit="submitPegawai(event,${id||'null'})">
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Nama Lengkap</label><input type="text" class="fi" name="nama" required value="${p?p.nama:''}" placeholder="Nama lengkap dengan gelar"></div>
+          <div><label class="fl">NIP</label><input type="text" class="fi" name="nip" required value="${p?p.nip:''}" placeholder="18 digit NIP"></div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Jenis Kelamin</label><select class="fi" name="jekel"><option value="L" ${p&&p.jekel==='L'?'selected':''}>Laki-laki</option><option value="P" ${p&&p.jekel==='P'?'selected':''}>Perempuan</option></select></div>
+          <div><label class="fl">Golongan</label><select class="fi" name="gol">${['I/a','I/b','I/c','I/d','II/a','II/b','II/c','II/d','III/a','III/b','III/c','III/d','IV/a','IV/b','IV/c','IV/d','IV/e'].map(g=>`<option ${p&&p.gol===g?'selected':''}>${g}</option>`).join('')}</select></div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Jabatan</label><input type="text" class="fi" name="jabatan" required value="${p?p.jabatan:''}" placeholder="Contoh: Staf Seksi Dikdas"></div>
+          <div><label class="fl">Divisi</label><input type="text" class="fi" name="divisi" required value="${p?p.divisi:''}" placeholder="Contoh: Tata Usaha"></div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Pendidikan</label><select class="fi" name="pendidikan">${['SLTA','D-III','D-IV','S-1','S1','S-2','S-3','SMA/SLTA'].map(g=>`<option ${p&&p.pendidikan===g?'selected':''}>${g}</option>`).join('')}</select></div>
+          <div><label class="fl">Status Kepegawaian</label><select class="fi" name="statusPeg"><option value="PNS" ${p&&p.statusPeg==='PNS'?'selected':''}>PNS</option><option value="PPPK" ${p&&p.statusPeg==='PPPK'?'selected':''}>PPPK</option><option value="P3K PW" ${p&&p.statusPeg==='P3K PW'?'selected':''}>P3K PW</option><option value="CPNS" ${p&&p.statusPeg==='CPNS'?'selected':''}>CPNS</option></select></div>
+        </div>
+        <div class="grid2" style="margin-bottom:14px">
+          <div><label class="fl">Telepon</label><input type="text" class="fi" name="telp" required value="${p?p.telp:''}" placeholder="08xxxxxxxxxx"></div>
+          <div><label class="fl">Email</label><input type="email" class="fi" name="email" required value="${p?p.email:''}" placeholder="nama@instansi.go.id"></div>
+        </div>
+        <div style="margin-bottom:18px"><label class="fl">Tanggal Masuk</label><input type="date" class="fi" name="tglMasuk" required value="${p?p.tglMasuk:new Date().toISOString().split('T')[0]}"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="bs" onclick="closeM('M2')">Batal</button>
+          <button type="submit" class="bp"><i class="fas fa-save"></i> Simpan</button>
+        </div>
+      </form>
+    </div>`;
+  openM('M2');
+}
+
+function submitPegawai(e,id){
+  e.preventDefault();
+  const f = e.target;
+  const data = {nama:f.nama.value,nip:f.nip.value,jekel:f.jekel.value,gol:f.gol.value,jabatan:f.jabatan.value,divisi:f.divisi.value,telp:f.telp.value,email:f.email.value,tglMasuk:f.tglMasuk.value,pendidikan:f.pendidikan.value,statusPeg:f.statusPeg.value};
+  if(id){
+    const p = state.pegawai.find(x=>x.id===id);
+    Object.assign(p,data);
+    toast('Data pegawai diperbarui');
+  }else{
+    data.id = nextIdPeg();
+    state.pegawai.push(data);
+    toast('Pegawai baru ditambahkan');
+  }
+  save(); closeM('M2'); renderPegawai();
+}
+
+function hapusPegawai(id){
+  const p = state.pegawai.find(x=>x.id===id);
+  if(!confirm(`Hapus pegawai "${p.nama}"?`)) return;
+  state.pegawai = state.pegawai.filter(s=>s.id!==id);
+  save(); renderPegawai(); toast('Pegawai dihapus','err');
+}
+
+/* ===================== ARSIP ===================== */
+let fA_q='', fA_type='semua';
+function renderArsip(){
+  const all = [
+    ...state.suratMasuk.filter(s=>s.st==='selesai').map(s=>({...s,type:'masuk',pihak:s.dari})),
+    ...state.suratKeluar.filter(s=>s.st==='selesai').map(s=>({...s,type:'keluar',pihak:s.tujuan}))
+  ].sort((a,b)=>new Date(b.tgl)-new Date(a.tgl));
+  let f = all;
+  if(fA_type==='masuk') f=f.filter(s=>s.type==='masuk');
+  if(fA_type==='keluar') f=f.filter(s=>s.type==='keluar');
+  if(fA_q){const q=fA_q.toLowerCase();f=f.filter(s=>s.ns.toLowerCase().includes(q)||s.ph.toLowerCase().includes(q)||s.pihak.toLowerCase().includes(q))}
+  document.getElementById('p-arsip').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+      <p style="color:var(--muted)">Total: <strong style="color:var(--fg)">${f.length}</strong> surat diarsipkan</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="fi" style="width:150px" onchange="fA_type=this.value;renderArsip()">
+          ${['semua','masuk','keluar'].map(t=>`<option value="${t}" ${fA_type===t?'selected':''}>${t==='semua'?'Semua Jenis':t==='masuk'?'Surat Masuk':'Surat Keluar'}</option>`).join('')}
+        </select>
+        <div style="position:relative">
+          <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px"></i>
+          <input type="text" class="fi" placeholder="Cari arsip..." style="width:180px;padding-left:32px" value="${fA_q}" oninput="fA_q=this.value;renderArsip()">
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+      ${f.length? f.map(s=>`
+        <div class="crd" style="padding:16px;cursor:pointer" onclick="${s.type==='masuk'?`detailMasuk(${s.id})`:`detailKeluar(${s.id})`}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <span class="bg ${s.type==='masuk'?'b-masuk':'b-keluar'}">${s.type==='masuk'?'Masuk':'Keluar'}</span>
+            <span style="font-size:11px;color:var(--muted)">${fmtDateShort(s.tgl)}</span>
+          </div>
+          <div style="font-weight:700;font-size:12pt;margin-bottom:4px">${s.ph}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${s.pihak}</div>
+          <div style="font-size:11px;color:var(--accent);font-family:monospace">${s.ns}</div>
+          <div style="margin-top:10px"><button class="bs sm" onclick="event.stopPropagation();cetakSurat('${s.type}',${s.id})"><i class="fas fa-print"></i> Cetak</button></div>
+        </div>`).join('') : '<div class="es" style="grid-column:1/-1"><i class="fas fa-archive"></i><p>Arsip kosong</p></div>'}
+    </div>`;
+}
+
+/* ===================== KOP SURAT ===================== */
+function kopSurat(){
+  return `<div class="kop" style="border-bottom:3px solid #000;padding-bottom:4px;margin-bottom:12px;font-family:Arial,sans-serif">
+    <table style="width:100%;border-collapse:collapse">
+      <tr>
+        <td style="width:65px;vertical-align:middle;text-align:center;padding-right:6px">
+          <div style="width:55px;height:65px;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-size:8pt;font-weight:bold;line-height:1.1;color:#333;font-family:Arial,sans-serif">
+            LOGO<br>JATIM
+          </div>
+        </td>
+        <td style="text-align:center;vertical-align:middle;font-family:Arial,sans-serif">
+          <div style="font-size:11pt;font-weight:bold;letter-spacing:0.5px">${ORG.provinsi}</div>
+          <div style="font-size:12pt;font-weight:bold">${ORG.dinas}</div>
+          <div style="font-size:11pt;font-weight:bold;margin-top:1px">${ORG.nama}</div>
+          <div style="font-size:11pt;font-weight:bold">${ORG.nama2}</div>
+          <div style="font-size:9pt;margin-top:2px">${ORG.alamat}</div>
+          <div style="font-size:9pt">Telepon ${ORG.telp} &nbsp;|&nbsp; Pos-el: ${ORG.email}</div>
+        </td>
+        <td style="width:65px"></td>
+      </tr>
+    </table>
+  </div>`;
+}
+
+/* ===================== CETAK ===================== */
+function cetakSurat(type,id){
+  const s = type==='masuk'? state.suratMasuk.find(x=>x.id===id) : state.suratKeluar.find(x=>x.id===id);
+  if(!s) return;
+  const pihak = type==='masuk'? s.dari : s.tujuan;
+  document.getElementById('M3C').innerHTML = `
+    <div style="padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 style="font-size:16px;font-weight:700" class="fp">Preview Cetak</h3>
+        <div style="display:flex;gap:8px">
+          <button class="bp" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+          <button class="bs" onclick="closeM('M3')">Tutup</button>
+        </div>
+      </div>
+      <div id="printArea">
+        ${kopSurat()}
+        <div class="nsur">
+          <div>Nomor   : ${s.ns}</div>
+          <div>Perihal : ${s.ph}</div>
+          <div>Sifat   : Biasa</div>
+        </div>
+        <div style="text-align:right">Bandung, ${fmtDate(s.tgl)}</div>
+        <div style="margin:14px 0">Kepada Yth.</div>
+        <div style="font-weight:bold">${pihak}</div>
+        <div style="margin-bottom:20px">di Tempat</div>
+        <div class="isi">${s.isi}</div>
+        <div class="ttd">
+          <div>
+            <div>${ORG.jabatanKepala}</div>
+            <div style="height:70px"></div>
+            <div style="border-top:1px solid #111;padding-top:4px;font-weight:bold">${ORG.kepala}</div>
+            <div style="font-size:12px">NIP. ${ORG.nipKepala}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  openM('M3');
+}
+
+/* ===================== HELPERS ===================== */
+function meta(label,val){
+  return `<div style="margin-bottom:12px"><span class="fl">${label}</span><div>${val===undefined||val===null||val===''?'<span style="color:var(--muted)">—</span>':val}</div></div>`;
+}
+
+function gSearch(){
+  const q = document.getElementById('GS').value.toLowerCase().trim();
+  if(!q) return;
+  const inMasuk = state.suratMasuk.find(s=>s.ns.toLowerCase().includes(q)||s.ph.toLowerCase().includes(q)||s.dari.toLowerCase().includes(q));
+  if(inMasuk){go('surat-masuk');fM_q=q;renderSuratMasuk();return}
+  const inKeluar = state.suratKeluar.find(s=>s.ns.toLowerCase().includes(q)||s.ph.toLowerCase().includes(q)||s.tujuan.toLowerCase().includes(q));
+  if(inKeluar){go('surat-keluar');fK_q=q;renderSuratKeluar();return}
+  const inPeg = state.pegawai.find(p=>p.nama.toLowerCase().includes(q)||p.nip.includes(q));
+  if(inPeg){go('pegawai');fP_q=q;renderPegawai();return}
+}
+
+/* ===================== INIT ===================== */
+document.addEventListener('DOMContentLoaded',()=>{renderDashboard()});
+
+// Modal overlay click & escape
+document.querySelectorAll('.mo').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m) m.classList.remove('av')});
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') document.querySelectorAll('.mo.av').forEach(m=>m.classList.remove('av'));
+});
+</script>
+</body>
+</html>
